@@ -8,9 +8,6 @@ Purpose (insurance-grade):
 - Normalize categorical strings (trim/case)
 - Write staged parquet + a staging report (JSON) for governance/audit
 
-IMPORTANT:
-- Never modify raw snapshots. Staging produces new artifacts.
-- Any transformation that can affect modeling must be documented in the report.
 """
 
 from __future__ import annotations

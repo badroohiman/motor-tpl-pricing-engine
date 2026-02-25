@@ -1,0 +1,31 @@
+{
+  "dataset": "freMTPL2sev",
+  "ok": true,
+  "summary": {
+    "rows": 26639,
+    "cols": 2,
+    "columns": [
+      "IDpol",
+      "ClaimAmount"
+    ],
+    "coercion": {
+      "coercions": {
+        "IDpol": {
+          "dtype_before": "int64",
+          "dtype_after": "int64",
+          "na_before": 0,
+          "na_after": 0,
+          "new_nas": 0
+        },
+        "ClaimAmount": {
+          "dtype_before": "float64",
+          "dtype_after": "float64",
+          "na_before": 0,
+          "na_after": 0,
+          "new_nas": 0
+        }
+      }
+    }
+  },
+  "findings": []
+}

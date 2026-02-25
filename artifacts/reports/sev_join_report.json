@@ -1,0 +1,41 @@
+{
+  "created_at_utc": "2026-02-25T13:32:27+00:00",
+  "inputs": {
+    "freq_staged_path": "data\\staging\\freq_staged.parquet",
+    "sev_staged_path": "data\\staging\\sev_staged.parquet",
+    "freq_staged_sha256": "a88923b42b6c8e2994335d88cb48df0b555e6d2369b3192a57c3d8062fad016c",
+    "sev_staged_sha256": "32c42d2aea005845c8c4a30020b8cfbb73d6cfbf7a7ca31a0c3a62d89ec4fcce"
+  },
+  "outputs": {
+    "sev_train_path": "data\\staging\\sev_train.parquet",
+    "sev_train_sha256": "a5716b1a8f8f7443292f2be3733ba41f65f5eec9b024a974d29670e37c50bc38",
+    "sev_train_rows": 26444,
+    "sev_unmatched_path": "data\\staging\\sev_unmatched_claims.parquet",
+    "sev_unmatched_sha256": "d6c7d186975d1179b238f32ebfd8b37f7e2590f0320cf5f13f8ff0b43c4fdced",
+    "sev_unmatched_rows": 195
+  },
+  "diagnostics": {
+    "claims_rows_input": 26639,
+    "rows_matched": 26444,
+    "rows_unmatched": 195,
+    "match_rate": 0.9926799054018545,
+    "dup_policies_in_freq": 0,
+    "missing_unique_idpol": 6,
+    "top_missing_idpol_counts": {
+      "2262511": 66,
+      "2282134": 36,
+      "2227533": 25,
+      "2220367": 24,
+      "2277846": 23,
+      "2286775": 21
+    },
+    "merge_validate": "many_to_one"
+  },
+  "policy": {
+    "severity_trained_on": "claim rows only (ClaimAmount > 0) with policy features present",
+    "unmatched_handling": "unmatched claims quarantined to sev_unmatched_claims.parquet (excluded from training)",
+    "excluded_policy_cols": [
+      "ClaimNb"
+    ]
+  }
+}
