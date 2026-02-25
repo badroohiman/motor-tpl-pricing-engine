@@ -5,3 +5,6 @@ __pycache__/
 *.joblib
 *.parquet
 data/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

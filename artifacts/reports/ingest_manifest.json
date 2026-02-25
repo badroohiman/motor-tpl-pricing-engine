@@ -1,0 +1,215 @@
+{
+  "run_id": "ingest_2026-02-23T16-32-59+00-00",
+  "created_at_utc": "2026-02-23T16:33:01+00:00",
+  "pandas_version": "3.0.1",
+  "parquet_engine": "pyarrow",
+  "sources": [
+    {
+      "name": "freq",
+      "kind": "csv",
+      "path": "data\\raw\\freMTPL2freq.csv",
+      "sha256": "36356a9a32331ed87dbeef35217df782622fa175bfd0ebd290180b5a73aa06d0",
+      "bytes": 32554514,
+      "rows": 678013,
+      "cols": 12,
+      "columns": [
+        "IDpol",
+        "ClaimNb",
+        "Exposure",
+        "Area",
+        "VehPower",
+        "VehAge",
+        "DrivAge",
+        "BonusMalus",
+        "VehBrand",
+        "VehGas",
+        "Density",
+        "Region"
+      ],
+      "dtypes": {
+        "IDpol": "float64",
+        "ClaimNb": "int64",
+        "Exposure": "float64",
+        "Area": "str",
+        "VehPower": "int64",
+        "VehAge": "int64",
+        "DrivAge": "int64",
+        "BonusMalus": "int64",
+        "VehBrand": "str",
+        "VehGas": "str",
+        "Density": "int64",
+        "Region": "str"
+      }
+    },
+    {
+      "name": "sev",
+      "kind": "csv",
+      "path": "data\\raw\\freMTPL2sev.csv",
+      "sha256": "f4f6890af1896b0c9661d1d5a4369740a8175e1fbbdef6dbb175461f49fbf8ef",
+      "bytes": 376489,
+      "rows": 26639,
+      "cols": 2,
+      "columns": [
+        "IDpol",
+        "ClaimAmount"
+      ],
+      "dtypes": {
+        "IDpol": "int64",
+        "ClaimAmount": "float64"
+      }
+    },
+    {
+      "name": "freq_snapshot",
+      "kind": "parquet",
+      "path": "data\\raw_snapshots\\freMTPL2freq__ingest_2026-02-23T16-32-59+00-00.parquet",
+      "sha256": "23c37042032d5c05ec2fc1ca6875f2fa8ca6afd2efc800b9e997b770987558c0",
+      "bytes": 7431289,
+      "rows": 678013,
+      "cols": 12,
+      "columns": [
+        "IDpol",
+        "ClaimNb",
+        "Exposure",
+        "Area",
+        "VehPower",
+        "VehAge",
+        "DrivAge",
+        "BonusMalus",
+        "VehBrand",
+        "VehGas",
+        "Density",
+        "Region"
+      ],
+      "dtypes": {
+        "IDpol": "float64",
+        "ClaimNb": "int64",
+        "Exposure": "float64",
+        "Area": "str",
+        "VehPower": "int64",
+        "VehAge": "int64",
+        "DrivAge": "int64",
+        "BonusMalus": "int64",
+        "VehBrand": "str",
+        "VehGas": "str",
+        "Density": "int64",
+        "Region": "str"
+      }
+    },
+    {
+      "name": "sev_snapshot",
+      "kind": "parquet",
+      "path": "data\\raw_snapshots\\freMTPL2sev__ingest_2026-02-23T16-32-59+00-00.parquet",
+      "sha256": "32c42d2aea005845c8c4a30020b8cfbb73d6cfbf7a7ca31a0c3a62d89ec4fcce",
+      "bytes": 267889,
+      "rows": 26639,
+      "cols": 2,
+      "columns": [
+        "IDpol",
+        "ClaimAmount"
+      ],
+      "dtypes": {
+        "IDpol": "int64",
+        "ClaimAmount": "float64"
+      }
+    }
+  ],
+  "quality": [
+    {
+      "dataset": "freq",
+      "checks": {
+        "coercion": {
+          "columns": {
+            "ClaimNb": {
+              "na_before": 0,
+              "na_after": 0,
+              "new_nas_from_coercion": 0
+            },
+            "Exposure": {
+              "na_before": 0,
+              "na_after": 0,
+              "new_nas_from_coercion": 0
+            }
+          }
+        },
+        "IDpol_not_null": {
+          "present": true,
+          "nulls": 0,
+          "null_rate": 0.0
+        },
+        "Exposure_positive": {
+          "present": true,
+          "numeric": true,
+          "lo": 0.0,
+          "hi": null,
+          "below_lo": 0,
+          "above_hi": 0,
+          "out_of_range": 0,
+          "out_of_range_rate": 0.0
+        },
+        "Exposure_reasonable_max_1": {
+          "present": true,
+          "numeric": true,
+          "lo": 0.0,
+          "hi": 1.0,
+          "below_lo": 0,
+          "above_hi": 1224,
+          "out_of_range": 1224,
+          "out_of_range_rate": 0.0018052751200935675
+        },
+        "ClaimNb_non_negative": {
+          "present": true,
+          "numeric": true,
+          "negatives": 0,
+          "negative_rate": 0.0
+        },
+        "ClaimNb_integer_like": {
+          "present": true,
+          "integer_dtype": true,
+          "non_integer_like": 0,
+          "non_integer_like_rate": 0.0
+        },
+        "IDpol_duplicates": {
+          "present": true,
+          "dupe_rows": 0,
+          "dupe_rate": 0.0,
+          "key_cols": [
+            "IDpol"
+          ]
+        }
+      },
+      "ok": true
+    },
+    {
+      "dataset": "sev",
+      "checks": {
+        "coercion": {
+          "columns": {
+            "ClaimAmount": {
+              "na_before": 0,
+              "na_after": 0,
+              "new_nas_from_coercion": 0
+            }
+          }
+        },
+        "IDpol_not_null": {
+          "present": true,
+          "nulls": 0,
+          "null_rate": 0.0
+        },
+        "ClaimAmount_strictly_positive": {
+          "present": true,
+          "numeric": true,
+          "non_positive": 0,
+          "non_positive_rate": 0.0,
+          "zeros": 0,
+          "zero_rate": 0.0
+        }
+      },
+      "ok": true
+    }
+  ],
+  "notes": {
+    "freq_csv_name": "freMTPL2freq.csv",
+    "sev_csv_name": "freMTPL2sev.csv"
+  }
+}
