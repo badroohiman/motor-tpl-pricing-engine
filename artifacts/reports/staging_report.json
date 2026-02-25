@@ -1,0 +1,81 @@
+{
+  "created_at_utc": "2026-02-25T12:32:05+00:00",
+  "inputs": {
+    "freq_snapshot_path": "data\\raw_snapshots\\freMTPL2freq__ingest_2026-02-23T16-32-59+00-00.parquet",
+    "sev_snapshot_path": "data\\raw_snapshots\\freMTPL2sev__ingest_2026-02-23T16-32-59+00-00.parquet",
+    "freq_snapshot_sha256": "23c37042032d5c05ec2fc1ca6875f2fa8ca6afd2efc800b9e997b770987558c0",
+    "sev_snapshot_sha256": "32c42d2aea005845c8c4a30020b8cfbb73d6cfbf7a7ca31a0c3a62d89ec4fcce"
+  },
+  "outputs": {
+    "freq_staged_path": "data\\staging\\freq_staged.parquet",
+    "sev_staged_path": "data\\staging\\sev_staged.parquet",
+    "freq_staged_sha256": "a88923b42b6c8e2994335d88cb48df0b555e6d2369b3192a57c3d8062fad016c",
+    "sev_staged_sha256": "32c42d2aea005845c8c4a30020b8cfbb73d6cfbf7a7ca31a0c3a62d89ec4fcce"
+  },
+  "row_counts": {
+    "freq_rows": 678013,
+    "sev_rows": 26639
+  },
+  "metadata": {
+    "parquet_engine": "pyarrow",
+    "compression": "snappy"
+  },
+  "policies": [
+    {
+      "dataset": "freq",
+      "policies": [
+        {
+          "policy": "canonicalize_idpol_to_int64",
+          "nulls": 0,
+          "bad_parse": 0,
+          "non_integer_like": 0,
+          "dtype_after": "int64"
+        },
+        {
+          "policy": "normalize_categories",
+          "columns": {
+            "Area": {
+              "na_before": 0,
+              "na_after": 0,
+              "dtype_after": "string"
+            },
+            "VehBrand": {
+              "na_before": 0,
+              "na_after": 0,
+              "dtype_after": "string"
+            },
+            "VehGas": {
+              "na_before": 0,
+              "na_after": 0,
+              "dtype_after": "string"
+            },
+            "Region": {
+              "na_before": 0,
+              "na_after": 0,
+              "dtype_after": "string"
+            }
+          }
+        },
+        {
+          "policy": "cap_exposure",
+          "cap_value": 1.0,
+          "rows_capped": 1224,
+          "max_before": 2.01,
+          "max_after": 1.0
+        }
+      ]
+    },
+    {
+      "dataset": "sev",
+      "policies": [
+        {
+          "policy": "canonicalize_idpol_to_int64",
+          "nulls": 0,
+          "bad_parse": 0,
+          "non_integer_like": 0,
+          "dtype_after": "int64"
+        }
+      ]
+    }
+  ]
+}
