@@ -1,0 +1,8 @@
+{
+  "exposure_min": 0.0,
+  "exposure_max": 1.0,
+  "allow_zero_exposure": false,
+  "min_match_rate": 0.98,
+  "max_unmatched_claims": 500
+}
+
