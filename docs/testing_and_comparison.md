@@ -48,6 +48,22 @@ python -m src.pricing.pricing_engine --config configs/pricing/pricing_config.yam
 
 Replace `353.26` with the `expected_loss` from step 3 if you want to test the full flow.
 
+### 5. Batch rating + pricing adequacy report (production proof)
+
+Score the full portfolio and produce deciles, observed vs predicted loss, and a report:
+
+```powershell
+python -m src.pricing.batch_rating --portfolio data/staging/freq_staged.parquet --observed data/staging/sev_train.parquet --out-dir artifacts/reports/pricing_adequacy
+```
+
+**Outputs (in `--out-dir`):**
+- `adequacy_deciles.csv` — deciles by predicted pure premium with exposure, predicted sum, observed claims sum, observed amount sum, ratio
+- `pricing_adequacy_report.md` — summary + decile table + portfolio totals
+- `adequacy_deciles.png` — chart: predicted vs observed loss by decile (if observed amounts provided)
+- `scored_portfolio.parquet` — each policy with `pred_pure_premium`, `lambda_freq`, `sev_mean`, `rate_annual` (omit with `--no-scored-portfolio`)
+
+Use `--observed` to merge claim-level data (e.g. `sev_train.parquet`) so observed loss per decile is actual total claim amount; without it, only claim counts are compared.
+
 ---
 
 ## Part B: Compare before vs after (e.g. splines)

@@ -133,6 +133,7 @@ def _parse_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
     out.setdefault("min_premium", 100.0)
     out.setdefault("max_premium", 5000.0)
 
+    out.setdefault("guardrails", {})
     out.setdefault("tiering", {"enabled": False, "bands": []})
     return out
 

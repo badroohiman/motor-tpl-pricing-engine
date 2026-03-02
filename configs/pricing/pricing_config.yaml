@@ -14,6 +14,10 @@ tax_ratio: 0.00
 min_premium: 100.0
 max_premium: 5000.0
 
+guardrails:
+  # If set, cap predicted severity at serving time with reason code SEV_PRED_GUARDRAIL_CAPPED
+  severity_guardrail_cap: null  # e.g. 50000.0
+
 tiering:
   enabled: false
   bands: []

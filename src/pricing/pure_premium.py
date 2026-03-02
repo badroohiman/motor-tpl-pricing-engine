@@ -28,6 +28,8 @@ import patsy
 from patsy import bs  # for formula bs(DrivAge, df=5), bs(VehAge, df=5) at inference
 import joblib
 
+from src.explain.glm_explainer import GLMExplainer
+
 
 # -----------------------------
 # Warning structure
@@ -94,37 +96,200 @@ def _range_warnings(p: Dict[str, Any]) -> List[WarningItem]:
 
     exp = p.get("Exposure")
     if exp is None:
-        w.append(WarningItem(code="MISSING_EXPOSURE", message="Exposure is missing.", level="ERROR", field="Exposure"))
+        w.append(
+            WarningItem(
+                code="MISSING_EXPOSURE",
+                message="Exposure is missing.",
+                level="ERROR",
+                field="Exposure",
+            )
+        )
+        w.append(
+            WarningItem(
+                code="REFER_TO_UNDERWRITER",
+                message="Exposure missing.",
+                level="ERROR",
+                field="Exposure",
+            )
+        )
     else:
         if exp <= 0:
-            w.append(WarningItem(code="EXPOSURE_LE_ZERO", message="Exposure must be > 0.", level="ERROR", field="Exposure", value=exp))
+            w.append(
+                WarningItem(
+                    code="EXPOSURE_LE_ZERO",
+                    message="Exposure must be > 0.",
+                    level="ERROR",
+                    field="Exposure",
+                    value=exp,
+                )
+            )
+            w.append(
+                WarningItem(
+                    code="REFER_TO_UNDERWRITER",
+                    message="Exposure <= 0 (invalid).",
+                    level="ERROR",
+                    field="Exposure",
+                    value=exp,
+                )
+            )
         if exp < 0.01:
-            w.append(WarningItem(code="LOW_EXPOSURE", message="Very low exposure may lead to unstable rates.", field="Exposure", value=exp))
+            w.append(
+                WarningItem(
+                    code="LOW_EXPOSURE",
+                    message="Very low exposure may lead to unstable rates.",
+                    field="Exposure",
+                    value=exp,
+                )
+            )
         if exp > 1.0:
             # In staging we capped; in serving we warn but do NOT auto-cap silently
-            w.append(WarningItem(code="EXPOSURE_GT_1", message="Exposure > 1.0 is unusual for policy-year fraction.", field="Exposure", value=exp))
+            w.append(
+                WarningItem(
+                    code="EXPOSURE_GT_1",
+                    message="Exposure > 1.0 is unusual for policy-year fraction.",
+                    field="Exposure",
+                    value=exp,
+                )
+            )
+            w.append(
+                WarningItem(
+                    code="REFER_TO_UNDERWRITER",
+                    message="Exposure out of expected range (>1.0).",
+                    field="Exposure",
+                    value=exp,
+                )
+            )
 
     da = p.get("DrivAge")
     if da is not None and da < 18:
-        w.append(WarningItem(code="DRIVAGE_UNDER_18", message="Driver age < 18 is out of expected range.", field="DrivAge", value=da))
+        w.append(
+            WarningItem(
+                code="DRIVAGE_UNDER_18",
+                message="Driver age < 18 is out of expected range.",
+                field="DrivAge",
+                value=da,
+            )
+        )
+        w.append(
+            WarningItem(
+                code="REFER_TO_UNDERWRITER",
+                message="Driver age below minimum threshold.",
+                field="DrivAge",
+                value=da,
+            )
+        )
 
     va = p.get("VehAge")
     if va is not None and va < 0:
-        w.append(WarningItem(code="VEHAGE_NEGATIVE", message="Vehicle age < 0 is invalid.", level="ERROR", field="VehAge", value=va))
+        w.append(
+            WarningItem(
+                code="VEHAGE_NEGATIVE",
+                message="Vehicle age < 0 is invalid.",
+                level="ERROR",
+                field="VehAge",
+                value=va,
+            )
+        )
+        w.append(
+            WarningItem(
+                code="REFER_TO_UNDERWRITER",
+                message="Vehicle age invalid (<0).",
+                level="ERROR",
+                field="VehAge",
+                value=va,
+            )
+        )
 
     bm = p.get("BonusMalus")
     if bm is not None and (bm < 50 or bm > 350):
-        w.append(WarningItem(code="BONUSMALUS_OUT_OF_RANGE", message="BonusMalus outside typical [50,350].", field="BonusMalus", value=bm))
+        w.append(
+            WarningItem(
+                code="BONUSMALUS_OUT_OF_RANGE",
+                message="BonusMalus outside typical [50,350].",
+                field="BonusMalus",
+                value=bm,
+            )
+        )
+        w.append(
+            WarningItem(
+                code="REFER_TO_UNDERWRITER",
+                message="BonusMalus out of range [50,350].",
+                field="BonusMalus",
+                value=bm,
+            )
+        )
 
     den = p.get("Density")
     if den is not None and den < 0:
-        w.append(WarningItem(code="DENSITY_NEGATIVE", message="Density < 0 is invalid.", level="ERROR", field="Density", value=den))
+        w.append(
+            WarningItem(
+                code="DENSITY_NEGATIVE",
+                message="Density < 0 is invalid.",
+                level="ERROR",
+                field="Density",
+                value=den,
+            )
+        )
+        w.append(
+            WarningItem(
+                code="REFER_TO_UNDERWRITER",
+                message="Density negative (invalid).",
+                level="ERROR",
+                field="Density",
+                value=den,
+            )
+        )
 
     return w
 
 
+def _category_warnings(
+    p: Dict[str, Any],
+    known_factor_levels: Dict[str, List[str]],
+) -> List[WarningItem]:
+    """
+    Check for unknown categorical levels versus training factor_levels.
+    For unknown categories, emit a warning and a REFER_TO_UNDERWRITER flag.
+
+    Mapping to an 'OTHER' bucket is only safe if such a level exists and
+    the model was trained with it, so here we take the conservative route
+    and just refer.
+    """
+    w: List[WarningItem] = []
+    for col, levels in known_factor_levels.items():
+        if col not in p or p[col] is None:
+            continue
+        val = str(p[col])
+        if val not in {str(x) for x in levels}:
+            w.append(
+                WarningItem(
+                    code="UNKNOWN_CATEGORY",
+                    message=f"Value '{val}' for {col} not seen in training factor levels.",
+                    field=col,
+                    value=val,
+                )
+            )
+            w.append(
+                WarningItem(
+                    code="REFER_TO_UNDERWRITER",
+                    message=f"Unknown categorical level for {col}.",
+                    field=col,
+                    value=val,
+                )
+            )
+    return w
+
+
 def _errors_present(warnings: List[WarningItem]) -> bool:
-    return any(w.level == "ERROR" for w in warnings)
+    """
+    Block scoring when we have:
+    - any ERROR-level warning, or
+    - any explicit REFER_TO_UNDERWRITER code (operational guardrail).
+    """
+    return any(
+        (w.level == "ERROR") or (w.code == "REFER_TO_UNDERWRITER")
+        for w in warnings
+    )
 
 
 # -----------------------------
@@ -211,6 +376,21 @@ class PatsyGLMModel:
         else:
             pred = self.res.predict(X, offset=offset)
         return np.asarray(pred).reshape(-1)
+
+    def predict_batch(self, df: pd.DataFrame, *, offset: Optional[np.ndarray] = None) -> np.ndarray:
+        """
+        Batch prediction: full portfolio DataFrame. No row expansion needed;
+        patsy uses all rows for design matrix (same columns as training).
+        """
+        df_eval = _ensure_formula_lhs_in_df(df.copy(), self.formula)
+        _, X = patsy.dmatrices(self.formula, df_eval, return_type="dataframe")
+        if offset is None:
+            pred = self.res.predict(X)
+        else:
+            pred = self.res.predict(X, offset=offset)
+        return np.asarray(pred).reshape(-1)
+
+
 @dataclass(frozen=True)
 class PurePremiumResult:
     lambda_freq: float          # expected claim count for the given exposure period
@@ -218,6 +398,7 @@ class PurePremiumResult:
     sev_mean: float             # expected claim amount conditional on claim
     expected_loss: float        # pure premium for the given exposure period
     warnings: List[Dict[str, Any]]
+    explanation: Dict[str, Any]
 
 
 class PurePremiumEngine:
@@ -235,6 +416,25 @@ class PurePremiumEngine:
         self.freq = PatsyGLMModel(self.freq_art)
         self.sev = PatsyGLMModel(self.sev_art)
 
+        # GLM explainers (exact contributions on log-link scale)
+        self.freq_explainer = GLMExplainer(
+            fitted_result=self.freq_art.fitted_result,
+            formula=self.freq_art.formula,
+        )
+        self.sev_explainer = GLMExplainer(
+            fitted_result=self.sev_art.fitted_result,
+            formula=self.sev_art.formula,
+        )
+
+        # Factor levels from artifacts, used for unknown-category guardrails
+        self.known_factor_levels: Dict[str, List[str]] = {}
+        for art in (self.freq_art, self.sev_art):
+            for col, levels in getattr(art, "factor_levels", {}).items():
+                self.known_factor_levels.setdefault(col, [])
+                for lvl in levels:
+                    if lvl not in self.known_factor_levels[col]:
+                        self.known_factor_levels[col].append(lvl)
+
         self.sev_cap_info: Optional[Dict[str, Any]] = None
         if sev_cap_path is not None and sev_cap_path.exists():
             self.sev_cap_info = json.loads(sev_cap_path.read_text(encoding="utf-8"))
@@ -248,6 +448,7 @@ class PurePremiumEngine:
 
         p = _normalize_policy(policy)
         warnings = _range_warnings(p)
+        warnings.extend(_category_warnings(p, self.known_factor_levels))
 
         if _errors_present(warnings):
             return PurePremiumResult(
@@ -256,6 +457,7 @@ class PurePremiumEngine:
                 sev_mean=float("nan"),
                 expected_loss=float("nan"),
                 warnings=[w.__dict__ for w in warnings],
+                explanation={"explain_version": "glm_exact_v1", "frequency": {}, "severity": {}, "pure_premium": {}},
             )
 
         # Build single-row dataframe (log1p_Density for training-serving parity with freq/sev models)
@@ -285,13 +487,86 @@ class PurePremiumEngine:
 
         expected_loss = pred_count * pred_sev
 
+        # Explanations (exact GLM contributions)
+        freq_expl = self.freq_explainer.explain(df)
+        sev_expl = self.sev_explainer.explain(df)
+
+        # Combine frequency + severity contributions into pure premium drivers on log scale:
+        # log(pure) = log(lambda) + log(mu) => contributions add.
+        freq_terms = freq_expl.get("terms", {})
+        sev_terms = sev_expl.get("terms", {})
+        pure_terms: Dict[str, float] = {}
+        for term, val in freq_terms.items():
+            pure_terms[term] = pure_terms.get(term, 0.0) + float(val)
+        for term, val in sev_terms.items():
+            pure_terms[term] = pure_terms.get(term, 0.0) + float(val)
+
+        # Top pure-premium drivers (by |log_contribution|)
+        if pure_terms:
+            import math as _math
+
+            sorted_terms = sorted(
+                pure_terms.items(), key=lambda kv: abs(kv[1]), reverse=True
+            )
+            top_pure = []
+            for term, val in sorted_terms[:5]:
+                top_pure.append(
+                    {
+                        "term": term,
+                        "log_contribution": float(val),
+                        "multiplicative_effect": float(_math.exp(val)),
+                    }
+                )
+        else:
+            top_pure = []
+
+        explanation = {
+            "explain_version": "glm_exact_v1",
+            "frequency": {"top_features": freq_expl.get("top_features", [])},
+            "severity": {"top_features": sev_expl.get("top_features", [])},
+            "pure_premium": {"top_features": top_pure},
+        }
+
         return PurePremiumResult(
             lambda_freq=pred_count,
             rate_annual=rate_annual,
             sev_mean=pred_sev,
             expected_loss=expected_loss,
             warnings=[w.__dict__ for w in warnings],
+            explanation=explanation,
         )
+
+    def batch_quote_pure_premium(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Score a portfolio DataFrame (policy-level). Adds columns: pred_pure_premium,
+        lambda_freq, sev_mean, rate_annual. Input must have policy feature columns + Exposure.
+        """
+        required = ["Area", "VehPower", "VehAge", "DrivAge", "BonusMalus", "VehBrand", "VehGas", "Density", "Region", "Exposure"]
+        missing = [c for c in required if c not in df.columns]
+        if missing:
+            raise ValueError(f"batch_quote_pure_premium: missing columns {missing}")
+
+        out = df.copy()
+        if "log1p_Density" not in out.columns:
+            out["log1p_Density"] = np.log1p(np.maximum(pd.to_numeric(out["Density"], errors="coerce").fillna(0), 0))
+        if "ClaimNb" not in out.columns:
+            out["ClaimNb"] = 0
+        if "ClaimAmount_capped" not in out.columns:
+            out["ClaimAmount_capped"] = 1.0
+
+        exposure = np.maximum(out["Exposure"].to_numpy().astype(float), 1e-12)
+        offset = np.log(exposure)
+
+        pred_count = self.freq.predict_batch(out, offset=offset)
+        pred_sev = self.sev.predict_batch(out)
+        if self.guardrail_pred_sev_cap is not None:
+            pred_sev = np.minimum(pred_sev, self.guardrail_pred_sev_cap)
+
+        out["lambda_freq"] = pred_count
+        out["sev_mean"] = pred_sev
+        out["rate_annual"] = pred_count / exposure
+        out["pred_pure_premium"] = pred_count * pred_sev
+        return out
 
 
 # -----------------------------
