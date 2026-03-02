@@ -1,0 +1,31 @@
+{
+  "timestamp_utc": "2026-02-26T10:54:55.240761+00:00",
+  "paths": {
+    "freq_staged": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\data\\staging\\freq_staged.parquet",
+    "sev_staged": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\data\\staging\\sev_staged.parquet",
+    "sev_train": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\data\\staging\\sev_train.parquet",
+    "sev_unmatched": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\data\\staging\\sev_unmatched_claims.parquet",
+    "freq_validation_report": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\artifacts\\reports\\freq_validation_report.json",
+    "sev_validation_report": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\artifacts\\reports\\sev_validation_report.json",
+    "staging_report": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\artifacts\\reports\\staging_report.json",
+    "sev_join_report": "C:\\Users\\imanb\\Documents\\motor-tpl-pricing-engine\\artifacts\\reports\\sev_join_report.json"
+  },
+  "freq": {
+    "rows": 678013,
+    "unique_policies": 678013,
+    "exposure_min": 0.00273224,
+    "exposure_max": 1.0,
+    "claimnb_zero_rate": 0.9497649750078538,
+    "claimnb_max": 16.0
+  },
+  "sev": {
+    "rows": 26639,
+    "unique_policies": 24950
+  },
+  "join": {
+    "match_rate": 0.9926799054018545,
+    "rows_unmatched": 195,
+    "rows_matched": 26444,
+    "claims_rows_input": 26639
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "Area": "A",
+  "VehPower": 6,
+  "VehAge": 3,
+  "DrivAge": 35,
+  "BonusMalus": 80,
+  "VehBrand": "B1",
+  "VehGas": "regular",
+  "Density": 1000,
+  "Region": "R24",
+  "Exposure": 1.0
+}

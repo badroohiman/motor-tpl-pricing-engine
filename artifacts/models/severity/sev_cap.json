@@ -1,0 +1,9 @@
+{
+  "run_id": "sev_2026-02-26T15-54-04Z",
+  "created_at_utc": "2026-02-26T15:54:04+00:00",
+  "cap_quantile": 0.999,
+  "cap_value": 152223.24082000018,
+  "target": "ClaimAmount",
+  "applies_to": "training_target_winsorization",
+  "notes": "Cap is applied for training stability; catastrophic claims quarantined separately for audit."
+}

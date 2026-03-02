@@ -1,0 +1,19 @@
+# configs/pricing_config.yaml
+version: "2026-02-26_v1"
+
+# "division" is actuarial-style:
+#   gross_before_tax = pure / (1 - expense - margin)
+# "multiplicative" is a simpler approximation:
+#   gross_before_tax = pure * (1 + expense + margin)
+method: "division"
+
+expense_ratio: 0.25
+margin_ratio: 0.10
+tax_ratio: 0.00
+
+min_premium: 100.0
+max_premium: 5000.0
+
+tiering:
+  enabled: false
+  bands: []

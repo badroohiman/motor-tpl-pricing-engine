@@ -1,0 +1,19 @@
+{
+  "run_id": "sev_2026-02-26T15-54-04Z",
+  "created_at_utc": "2026-02-26T15:54:04+00:00",
+  "input_path": "data\\staging\\sev_train.parquet",
+  "input_sha256": "a5716b1a8f8f7443292f2be3733ba41f65f5eec9b024a974d29670e37c50bc38",
+  "rows": 26444,
+  "valid_frac": 0.2,
+  "cap_quantile": 0.999,
+  "cap_value": 152223.24082000018,
+  "mae_log": 0.9304355965992276,
+  "rmse_log": 1.3196998531386352,
+  "actual_mean": 1998.5159160521837,
+  "pred_mean": 1931.1631605591167,
+  "actual_median": 1172.0,
+  "pred_median": 1793.198731160378,
+  "glm_aic": 401793.3360843193,
+  "glm_deviance": 28853.16237458522,
+  "glm_scale": 9.99990530196353
+}

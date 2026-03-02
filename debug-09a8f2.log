@@ -1,0 +1,2 @@
+{"sessionId": "09a8f2", "hypothesisId": "H1", "location": "severity/train.py:fit_gamma_glm", "message": "fit_gamma_glm return", "data": {"return_count": 2}, "timestamp": 1772120342558}
+{"sessionId": "09a8f2", "hypothesisId": "H1", "location": "severity/train.py:train", "message": "fit_gamma_glm unpack", "data": {"return_count": 2}, "timestamp": 1772120342559}

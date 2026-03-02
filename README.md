@@ -1,19 +1,3 @@
-عالی 👌
-من نسخه‌ی README تو را یک سطح بالاتر می‌برم — هم از نظر **ساختار حرفه‌ای‌تر**، هم از نظر **زبان مناسب UK insurance market**، هم طوری که وقتی recruiter یا hiring manager (مثلاً AXA / Hiscox / Admiral) بازش می‌کند فوراً بفهمد این یک پروژه‌ی جدی است.
-
-در این نسخه:
-
-* value proposition واضح‌تر شده
-* governance برجسته‌تر شده
-* expected loss رسمی‌تر بیان شده
-* CI/CD و auditability اشاره شده
-* بخش “Commercial Relevance” اضافه شده (مهم برای مصاحبه)
-
-می‌تونی مستقیم جایگزین کنی 👇
-
----
-
-```markdown
 # Motor TPL Pricing Engine  
 **Production-Grade Insurance Pricing System (France – freMTPL2)**
 
@@ -110,24 +94,32 @@ API / Batch Rating
 ## 4. Repository Structure
 
 ```
-
 src/
-data/
-ingest.py        # Snapshot + manifest
-schemas.py       # Data contracts
-validate.py      # Schema + business rule validation
-staging.py       # Controlled transformations
-joins.py         # Severity dataset builder
-features/
-models/
-pricing/
-inference/
-monitoring/
+  data/
+    ingest.py        # Snapshot + manifest
+    schemas.py       # Data contracts
+    validate.py      # Schema + business rule validation
+    staging.py       # Controlled transformations
+    joins.py         # Severity dataset builder
+  models/
+    artifacts.py    # FrequencyModelArtifact, SeverityModelArtifact (formula, factor_levels)
+    frequency/
+      train.py      # NB GLM with log(Exposure) offset
+    severity/
+      train.py      # Gamma GLM, optional tail cap
+  pricing/
+    pure_premium.py   # λ × μ from loaded models; policy → PurePremiumResult
+    pricing_engine.py # Gross pricing: pure → gross (config-driven)
 
 configs/
-artifacts/
-data/
+  qc_config.json           # QC thresholds (exposure, match rate, etc.)
+  sample_policy.json       # Example policy for quote
+  pricing/
+    pricing_config.yaml   # Expense, margin, min/max premium, tiering
 
+notebooks/   # 01_data_qc, 02_freq_eda, 03_sev_eda, 04_pricing_adequacy
+docs/        # architecture_principles.md
+artifacts/   # Models (joblib), reports, model cards
 ```
 
 ---
@@ -198,24 +190,57 @@ python -m src.data.joins
 
 ```
 
+### 5️⃣ Train frequency model
+
+```
+python -m src.models.frequency.train --data data/staging/freq_staged.parquet
+```
+
+Outputs: `artifacts/models/frequency/freq_glm_nb.joblib`, metrics, deciles, model card.
+
+### 6️⃣ Train severity model
+
+```
+python -m src.models.severity.train --data data/staging/sev_train.parquet --cap-quantile 0.999
+```
+
+Outputs: `artifacts/models/severity/sev_glm_gamma.joblib`, `sev_cap.json`, metrics, deciles, model card.
+
+### 7️⃣ Quote pure premium (single policy)
+
+```
+python -m src.pricing.pure_premium --policy-json configs/sample_policy.json
+```
+
+Uses freq + sev joblib artifacts (and optional `artifacts/models/severity/sev_cap.json`). Returns λ, μ, expected loss, warnings.
+
+### 8️⃣ Gross pricing (pure → gross)
+
+```
+python -m src.pricing.pricing_engine --config configs/pricing/pricing_config.yaml --pure <PURE_PREMIUM>
+```
+
+Loads `configs/pricing/pricing_config.yaml` (expense_ratio, margin_ratio, min/max_premium, tiering) and returns gross premium with breakdown and config version.
+
 ---
 
-## 7. Modeling Strategy (Planned)
+## 7. Modeling Strategy (Implemented)
 
 ### Frequency
-- Poisson GLM with log(Exposure) offset
-- Negative Binomial (if over-dispersion detected)
-- Calibration by decile
+- Negative Binomial GLM with log(Exposure) offset
+- Calibration by decile; metrics and model card written to artifacts
 
 ### Severity
-- Gamma GLM (log link) baseline
-- Lognormal alternative for heavy tails
-- Tail diagnostics & stability analysis
+- Gamma GLM (log link), optional P99.9 cap for training stability
+- Decile calibration; factor levels stored in artifact for inference parity
 
 ### Pure Premium
-- λ × μ
-- Decile-based pricing adequacy evaluation
-- Loss ratio proxy analysis
+- λ × μ from loaded models; formula + factor_levels ensure same design matrix at inference (no pickling of patsy design_info)
+- Structured warnings (range, guardrails)
+
+### Gross pricing
+- Config-driven: division or multiplicative loadings, min/max caps, optional tiering
+- Quote includes breakdown and pricing_config_version for audit
 
 ---
 
@@ -247,6 +272,8 @@ This aligns with real-world pricing environments in UK and EU motor markets.
 ## 10. Status
 
 ✅ Data ingestion & governance complete  
-🔄 Modeling layer in progress  
-⏳ Pricing engine integration upcoming
-```
+✅ Modeling layer (frequency NB + severity Gamma) complete  
+✅ Pure premium engine (policy → λ×μ) complete  
+✅ Gross pricing engine (config-driven, YAML) complete  
+⏳ API / batch rating (planned)  
+⏳ CI gate + drift monitoring (planned)
