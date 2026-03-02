@@ -1,8 +1,8 @@
 # Frequency Model Card — Motor TPL (freMTPL2)
 
 ## Run
-- run_id: `freq_2026-03-02T12-37-14Z`
-- created_at_utc: `2026-03-02T12:37:14+00:00`
+- run_id: `freq_2026-03-02T12-32-04Z`
+- created_at_utc: `2026-03-02T12:32:04+00:00`
 
 ## Data
 - input: `data\staging\freq_staged.parquet`

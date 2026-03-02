@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 
 import patsy
+from patsy import bs  # for formula bs(DrivAge, df=5), bs(VehAge, df=5)
 import statsmodels.api as sm
 import joblib
 
@@ -122,10 +123,10 @@ def decile_table_rate(
 class TrainConfig:
     seed: int = 42
     valid_frac: float = 0.2
-    # Frequency formula excludes ClaimNb/Exposure obviously; Exposure is an offset
+    # Frequency formula: Exposure is offset. Density as log1p. Age as bs(., df=5) for nonlinear risk.
     formula: str = (
         "ClaimNb ~ "
-        "VehPower + VehAge + DrivAge + BonusMalus + Density + "
+        "VehPower + bs(DrivAge, df=5) + bs(VehAge, df=5) + BonusMalus + log1p_Density + "
         "C(Area) + C(VehBrand) + C(VehGas) + C(Region)"
     )
     model: str = "NegativeBinomialGLM"
@@ -158,6 +159,9 @@ def load_data(path: Path) -> pd.DataFrame:
     if (df["Exposure"] <= 0).any():
         n_bad = int((df["Exposure"] <= 0).sum())
         raise ValueError(f"Exposure must be > 0 for log-offset. Bad rows: {n_bad}")
+
+    # Density is heavy-tailed; log1p gives a more realistic, stable effect (training-serving parity)
+    df["log1p_Density"] = np.log1p(np.maximum(pd.to_numeric(df["Density"], errors="coerce").fillna(0), 0))
 
     return df
 
@@ -328,11 +332,21 @@ def train(
         c: sorted(tr[c].dropna().astype(str).unique().tolist()) for c in factor_cols
     }
 
+    # Anchor sample for bs(DrivAge), bs(VehAge) so inference gets same knot placement (training-serving parity)
+    n_anchor = min(2000, len(tr))
+    rng = np.random.default_rng(config.seed)
+    anchor_idx = rng.choice(len(tr), size=n_anchor, replace=False)
+    spline_anchor = {
+        "DrivAge": tr["DrivAge"].iloc[anchor_idx].to_numpy(),
+        "VehAge": tr["VehAge"].iloc[anchor_idx].to_numpy(),
+    }
+
     artifact = FrequencyModelArtifact(
         fitted_result=res,
         formula=config.formula,
         config=asdict(config),
         factor_levels=factor_levels,
+        spline_anchor=spline_anchor,
     )
     joblib.dump(artifact, out_model_path)
 

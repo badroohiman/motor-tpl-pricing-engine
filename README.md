@@ -228,19 +228,45 @@ Loads `configs/pricing/pricing_config.yaml` (expense_ratio, margin_ratio, min/ma
 
 ### Frequency
 - Negative Binomial GLM with log(Exposure) offset
+- Age terms: `bs(DrivAge, df=5)`, `bs(VehAge, df=5)` for nonlinear risk; Density as `log1p_Density`
 - Calibration by decile; metrics and model card written to artifacts
 
 ### Severity
 - Gamma GLM (log link), optional P99.9 cap for training stability
-- Decile calibration; factor levels stored in artifact for inference parity
+- Same age splines and log1p_Density; factor levels and spline_anchor stored for inference parity
+- Decile calibration
 
 ### Pure Premium
-- λ × μ from loaded models; formula + factor_levels ensure same design matrix at inference (no pickling of patsy design_info)
+- λ × μ from loaded models; formula + factor_levels + spline_anchor ensure same design matrix at inference (no pickling of patsy design_info)
 - Structured warnings (range, guardrails)
 
 ### Gross pricing
 - Config-driven: division or multiplicative loadings, min/max caps, optional tiering
 - Quote includes breakdown and pricing_config_version for audit
+
+---
+
+## 7.1 Comparing model performance (before vs after feature engineering)
+
+To compare performance **before** and **after** a change (e.g. log1p(Density) or bs(DrivAge/VehAge) splines):
+
+1. **Save the current run as baseline** (before changing the model):
+   - Copy the report outputs so they are not overwritten, e.g.:
+     - `mkdir -p artifacts/reports_baseline && cp -r artifacts/reports/frequency artifacts/reports_baseline/` (and same for `severity` if needed).
+   - Or: train the **old** model (e.g. with `Density` in the formula), then copy `artifacts/reports` to `artifacts/reports_baseline`.
+
+2. **Train the new model** (e.g. with `log1p_Density`). This overwrites `artifacts/reports/frequency/` (and severity if you run severity training).
+
+3. **Run the comparison script:**
+   ```bash
+   python scripts/compare_model_runs.py --before artifacts/reports_baseline --after artifacts/reports
+   ```
+
+The script prints:
+- **Metrics**: `abs_rate_error_val`, `mae_log1p`, AIC, deviance, etc. (lower error / lower AIC = better).
+- **Decile calibration**: `obs_over_pred` by decile (closer to 1.0 = better); and mean absolute deviation from 1.0 (MAD).
+
+Use this to confirm that the new feature engineering improves or does not harm calibration and error metrics.
 
 ---
 

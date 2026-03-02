@@ -25,6 +25,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import patsy
+from patsy import bs  # for formula bs(DrivAge, df=5), bs(VehAge, df=5) at inference
 import joblib
 
 
@@ -161,6 +162,28 @@ def _expand_df_for_patsy(df: pd.DataFrame, factor_levels: Dict[str, List[str]]) 
     return pd.concat(out, ignore_index=True)
 
 
+def _append_spline_anchor_rows(df: pd.DataFrame, spline_anchor: Dict[str, Any]) -> pd.DataFrame:
+    """
+    Append rows with training (DrivAge, VehAge) values so patsy bs(., df=5) computes
+    the same knot placement as at training (training-serving parity).
+    """
+    if not spline_anchor or "DrivAge" not in spline_anchor or "VehAge" not in spline_anchor:
+        return df
+    driv = np.asarray(spline_anchor["DrivAge"]).ravel()
+    veh = np.asarray(spline_anchor["VehAge"]).ravel()
+    n = min(len(driv), len(veh))
+    if n == 0:
+        return df
+    policy = df.iloc[[0]].copy()
+    anchor_rows = []
+    for i in range(n):
+        row = policy.copy()
+        row["DrivAge"] = float(driv[i])
+        row["VehAge"] = float(veh[i])
+        anchor_rows.append(row)
+    return pd.concat([df] + anchor_rows, ignore_index=True)
+
+
 class PatsyGLMModel:
     """GLM wrapper: uses formula at predict time (design_info is not picklable)."""
 
@@ -170,13 +193,18 @@ class PatsyGLMModel:
         self.factor_levels: Dict[str, List[str]] = getattr(
             artifact, "factor_levels", None
         ) or {}
+        self.spline_anchor: Dict[str, Any] = getattr(
+            artifact, "spline_anchor", None
+        ) or {}
 
     def predict(self, df: pd.DataFrame, *, offset: Optional[np.ndarray] = None) -> np.ndarray:
         df_eval = _ensure_formula_lhs_in_df(df, self.formula)
         if self.factor_levels:
             df_eval = _expand_df_for_patsy(df_eval, self.factor_levels)
+        if self.spline_anchor:
+            df_eval = _append_spline_anchor_rows(df_eval, self.spline_anchor)
         _, X = patsy.dmatrices(self.formula, df_eval, return_type="dataframe")
-        # Use only the first row (the actual policy); rest were for consistent design columns
+        # Use only the first row (the actual policy); rest were for consistent design columns / knots
         X = X.iloc[[0]]
         if offset is None:
             pred = self.res.predict(X)
@@ -230,8 +258,9 @@ class PurePremiumEngine:
                 warnings=[w.__dict__ for w in warnings],
             )
 
-        # Build single-row dataframe
+        # Build single-row dataframe (log1p_Density for training-serving parity with freq/sev models)
         df = pd.DataFrame([p])
+        df["log1p_Density"] = np.log1p(np.maximum(float(p.get("Density", 0) or 0), 0))
 
         # Frequency: predict expected count for given exposure period using offset(log(Exposure))
         exp = float(df.loc[0, "Exposure"])

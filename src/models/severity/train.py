@@ -31,6 +31,7 @@ import pandas as pd
 # Statsmodels for GLM
 import statsmodels.api as sm
 import patsy
+from patsy import bs  # for formula bs(DrivAge, df=5), bs(VehAge, df=5)
 
 import joblib
 
@@ -108,10 +109,10 @@ class TrainConfig:
     cap_quantile: float = 0.999  # P99.9
     glm_family: str = "Gamma"
     link: str = "log"
-    # Keep a stable formula for auditability
+    # Density as log1p. Age as bs(., df=5) for nonlinear risk.
     formula: str = (
         "ClaimAmount_capped ~ "
-        "VehPower + VehAge + DrivAge + BonusMalus + Density + Exposure + "
+        "VehPower + bs(DrivAge, df=5) + bs(VehAge, df=5) + BonusMalus + log1p_Density + Exposure + "
         "C(Area) + C(VehBrand) + C(VehGas) + C(Region)"
     )
 
@@ -146,6 +147,9 @@ def load_data(path: Path) -> pd.DataFrame:
     if (df["ClaimAmount"] <= 0).any():
         n_bad = int((df["ClaimAmount"] <= 0).sum())
         raise ValueError(f"ClaimAmount must be strictly positive for severity modeling. Bad rows: {n_bad}")
+
+    # Density is heavy-tailed; log1p gives a more realistic, stable effect (training-serving parity)
+    df["log1p_Density"] = np.log1p(np.maximum(pd.to_numeric(df["Density"], errors="coerce").fillna(0), 0))
 
     return df
 
@@ -331,6 +335,14 @@ def train(
         c: sorted(tr[c].dropna().astype(str).unique().tolist()) for c in factor_cols
     }
 
+    n_anchor = min(2000, len(tr))
+    rng = np.random.default_rng(config.seed)
+    anchor_idx = rng.choice(len(tr), size=n_anchor, replace=False)
+    spline_anchor = {
+        "DrivAge": tr["DrivAge"].iloc[anchor_idx].to_numpy(),
+        "VehAge": tr["VehAge"].iloc[anchor_idx].to_numpy(),
+    }
+
     # Save model artifact
     artifact = SeverityModelArtifact(
         fitted_result=res,
@@ -338,6 +350,7 @@ def train(
         cap_value=cap_value,
         config=asdict(config),
         factor_levels=factor_levels,
+        spline_anchor=spline_anchor,
     )
     joblib.dump(artifact, out_model_path)
 

@@ -1,8 +1,8 @@
 # Severity Model Card — Motor TPL (freMTPL2)
 
 ## Run
-- run_id: `sev_2026-03-02T12-37-51Z`
-- created_at_utc: `2026-03-02T12:37:51+00:00`
+- run_id: `sev_2026-03-02T12-09-10Z`
+- created_at_utc: `2026-03-02T12:09:10+00:00`
 
 ## Data
 - input: `data\staging\sev_train.parquet`
@@ -14,7 +14,7 @@
 - Model: **Gamma GLM**
 - Link: **log**
 - Formula:
-  - `ClaimAmount_capped ~ VehPower + bs(DrivAge, df=5) + bs(VehAge, df=5) + BonusMalus + log1p_Density + Exposure + C(Area) + C(VehBrand) + C(VehGas) + C(Region)`
+  - `ClaimAmount_capped ~ VehPower + VehAge + DrivAge + BonusMalus + log1p_Density + Exposure + C(Area) + C(VehBrand) + C(VehGas) + C(Region)`
 
 ## Tail Handling Policy
 - Winsorization (cap) applied to training target:
@@ -25,12 +25,12 @@
   - Catastrophic / very large claims are typically handled via large-loss controls or separate modeling.
 
 ## Evaluation (validation split)
-- log(MAE): `0.900418593389167`
-- log(RMSE): `1.2964878097300498`
+- log(MAE): `0.9293931981671683`
+- log(RMSE): `1.3192779953482103`
 - mean(actual): `1998.5159160521837`
-- mean(pred): `1846.910085579571`
+- mean(pred): `1928.6555112335923`
 - median(actual): `1172.0`
-- median(pred): `1718.329619502263`
+- median(pred): `1793.3334153524572`
 
 ## Known Limitations
 - Validation uses a random split (not time-based; dataset is not time-indexed).

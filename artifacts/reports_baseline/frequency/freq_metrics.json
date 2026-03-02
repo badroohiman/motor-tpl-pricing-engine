@@ -1,6 +1,6 @@
 {
-  "run_id": "freq_2026-03-02T12-37-14Z",
-  "created_at_utc": "2026-03-02T12:37:14+00:00",
+  "run_id": "freq_2026-03-02T12-32-04Z",
+  "created_at_utc": "2026-03-02T12:32:04+00:00",
   "input_path": "data\\staging\\freq_staged.parquet",
   "input_sha256": "a88923b42b6c8e2994335d88cb48df0b555e6d2369b3192a57c3d8062fad016c",
   "rows": 678013,
