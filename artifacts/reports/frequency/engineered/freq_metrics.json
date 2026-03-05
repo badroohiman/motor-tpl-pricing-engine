@@ -1,0 +1,21 @@
+{
+  "run_id": "freq_2026-03-04T13-59-44Z",
+  "created_at_utc": "2026-03-04T13:59:44+00:00",
+  "input_path": "data\\staging\\freq_staged.parquet",
+  "input_sha256": "a88923b42b6c8e2994335d88cb48df0b555e6d2369b3192a57c3d8062fad016c",
+  "rows": 678013,
+  "valid_frac": 0.2,
+  "feature_set": "engineered",
+  "formula": "ClaimNb ~ VehPower + bs(DrivAge, df=5) + bs(VehAge, df=5) + BonusMalus + log1p_Density + C(Area) + C(VehBrand) + C(VehGas) + C(Region)",
+  "zero_rate_val": 0.9493963997846655,
+  "obs_rate_val": 0.10106632898668375,
+  "pred_rate_mean_val": 0.11597138127066109,
+  "abs_rate_error_val": 0.014905052283977344,
+  "mae_count": 0.09939417156311604,
+  "rmse_count": 0.23740906081594781,
+  "mae_log1p": 0.08015154255366791,
+  "rmse_log1p": 0.15987081727070324,
+  "glm_aic": 225340.55381867095,
+  "glm_deviance": 148179.97442139918,
+  "glm_scale": 1.0
+}

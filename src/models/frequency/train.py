@@ -22,8 +22,6 @@ Outputs:
 """
 
 from __future__ import annotations
-from patsy import dmatrices
-from src.models.artifacts import FrequencyModelArtifact
 import argparse
 import json
 from dataclasses import dataclass, asdict
@@ -38,6 +36,10 @@ import patsy
 from patsy import bs  # for formula bs(DrivAge, df=5), bs(VehAge, df=5)
 import statsmodels.api as sm
 import joblib
+
+from patsy import dmatrices
+from src.features.training import FREQ_FEATURE_SETS
+from src.models.artifacts import FrequencyModelArtifact
 
 
 # -----------------------------
@@ -123,7 +125,8 @@ def decile_table_rate(
 class TrainConfig:
     seed: int = 42
     valid_frac: float = 0.2
-    # Frequency formula: Exposure is offset. Density as log1p. Age as bs(., df=5) for nonlinear risk.
+    feature_set: str = "engineered"
+    # Default frequency formula (engineered feature set); overridden from feature set registry in CLI.
     formula: str = (
         "ClaimNb ~ "
         "VehPower + bs(DrivAge, df=5) + bs(VehAge, df=5) + BonusMalus + log1p_Density + "
@@ -269,16 +272,20 @@ def train(
     run_id = f"freq_{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%SZ')}"
     created_at = utc_now_iso()
 
-    df = load_data(data_path)
+    df_raw = load_data(data_path)
     input_hash = sha256_file(data_path)
+
+    # Select and build feature set
+    spec = FREQ_FEATURE_SETS[config.feature_set]
+    df = spec.build(df_raw)
 
     tr, va = train_valid_split(df, seed=config.seed, valid_frac=config.valid_frac)
 
     # Fit NB GLM with exposure offset
-    res, _ = fit_nb_glm(tr, config.formula)
+    res, _ = fit_nb_glm(tr, spec.formula)
 
     # Predict
-    pred_count_va, pred_rate_va = predict_counts_and_rates(res, va, config.formula)
+    pred_count_va, pred_rate_va = predict_counts_and_rates(res, va, spec.formula)
 
     y_va = va["ClaimNb"].to_numpy()
     exp_va = va["Exposure"].to_numpy()
@@ -313,6 +320,8 @@ def train(
         "input_sha256": input_hash,
         "rows": int(len(df)),
         "valid_frac": config.valid_frac,
+        "feature_set": config.feature_set,
+        "formula": spec.formula,
         "zero_rate_val": zero_rate_val,
         "obs_rate_val": obs_rate_val,
         "pred_rate_mean_val": pred_rate_mean_val,
@@ -343,7 +352,7 @@ def train(
 
     artifact = FrequencyModelArtifact(
         fitted_result=res,
-        formula=config.formula,
+        formula=spec.formula,
         config=asdict(config),
         factor_levels=factor_levels,
         spline_anchor=spline_anchor,
@@ -360,7 +369,7 @@ def train(
         input_path=str(data_path),
         input_sha256=input_hash,
         rows=int(len(df)),
-        formula=config.formula,
+        formula=spec.formula,
         metrics=metrics,
         notes=notes,
     )
@@ -399,11 +408,26 @@ def main() -> None:
         default=r"artifacts\reports\frequency",
         help="Output directory for reports",
     )
+    parser.add_argument(
+        "--feature-set",
+        type=str,
+        default="engineered",
+        choices=list(FREQ_FEATURE_SETS.keys()),
+        help="Feature set to use (e.g. base, engineered)",
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--valid-frac", type=float, default=0.2, help="Validation fraction (default: 0.2)")
     args = parser.parse_args()
 
-    cfg = TrainConfig(seed=args.seed, valid_frac=args.valid_frac)
+    feature_set = args.feature_set
+    spec = FREQ_FEATURE_SETS[feature_set]
+
+    cfg = TrainConfig(
+        seed=args.seed,
+        valid_frac=args.valid_frac,
+        feature_set=feature_set,
+        formula=spec.formula,
+    )
 
     outdir = Path(args.outdir)
     reportdir = Path(args.reportdir)

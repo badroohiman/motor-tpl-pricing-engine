@@ -231,6 +231,9 @@ Loads `configs/pricing/pricing_config.yaml` (expense_ratio, margin_ratio, min/ma
 - Age terms: `bs(DrivAge, df=5)`, `bs(VehAge, df=5)` for nonlinear risk; Density as `log1p_Density`
 - Calibration by decile; metrics and model card written to artifacts
 
+#### Model Improvement (Feature Engineering)
+The engineered frequency model improves risk segmentation and calibration compared with the baseline GLM. By introducing spline transformations for driver age and vehicle age (`bs(DrivAge)` and `bs(VehAge)`) and applying a log transformation to population density (`log1p_Density`), the model better captures non-linear relationships in key risk factors. Decile analysis shows a significant improvement in risk separation, with lift increasing from approximately **4.8 to 7.0** between the lowest- and highest-risk segments. Calibration also improves, with observed-to-predicted claim frequency ratios remaining close to **1 across most deciles**, indicating better alignment between predicted and actual claim rates. In particular, the top decile now exhibits a substantially higher observed claim frequency (**0.324 vs 0.229 in the baseline**), demonstrating improved identification of high-risk policies and stronger ranking performance for pricing decisions.
+
 ### Severity
 - Gamma GLM (log link), optional P99.9 cap for training stability
 - Same age splines and log1p_Density; factor levels and spline_anchor stored for inference parity

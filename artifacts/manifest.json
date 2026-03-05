@@ -1,0 +1,11 @@
+{
+  "created_at_utc": "2026-03-02T14:38:04+00:00",
+  "freq_model_path": "artifacts\\models\\frequency\\freq_glm_nb.joblib",
+  "sev_model_path": "artifacts\\models\\severity\\sev_glm_gamma.joblib",
+  "pricing_config_path": "configs\\pricing\\pricing_config.yaml",
+  "pricing_config_version": "2026-02-26_v1",
+  "git_commit": "2831a862e8d48c47015ea3b9c07fbc5433e8d5b9",
+  "freq_model_sha256": "58d5dc4acee9160c925bf7a6c80683481499c7ff97e827261ee5b99fe14e8ad2",
+  "sev_model_sha256": "530aff35092e230f222285e85b2c2d4824b29dfe77e4dcf87d5a62ddd0af4e75",
+  "pricing_config_sha256": "0a57d83d1d7b76859415fc4a1260ee63626a6417ba5f2ff19601ab56803a68c7"
+}

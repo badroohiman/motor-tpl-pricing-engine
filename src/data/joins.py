@@ -8,13 +8,11 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from src.data.utils import ensure_dir
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
 
 
 def _sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -50,9 +48,9 @@ def build_severity_training_dataset(
       - out_path sibling: sev_unmatched_claims.parquet (claims missing policy features)
       - report_path (optional): full diagnostics + hashes
     """
-    _ensure_dir(out_path.parent)
+    ensure_dir(out_path.parent)
     if report_path is not None:
-        _ensure_dir(report_path.parent)
+        ensure_dir(report_path.parent)
 
     freq = pd.read_parquet(freq_staged_path)
     sev = pd.read_parquet(sev_staged_path)

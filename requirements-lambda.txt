@@ -1,7 +1,6 @@
-numpy
+numpy==1.26.4
 pandas
 statsmodels
-patsy
 joblib
 PyYAML
-
+patsy==0.5.6

@@ -1,5 +1,8 @@
 FROM public.ecr.aws/lambda/python:3.11
 
+# Install system build tools required for some Python packages (e.g. NumPy)
+RUN yum install -y gcc gcc-c++ make && yum clean all
+
 # Install Python dependencies required for quoting
 COPY requirements-lambda.txt ./requirements-lambda.txt
 RUN pip install --no-cache-dir -r requirements-lambda.txt

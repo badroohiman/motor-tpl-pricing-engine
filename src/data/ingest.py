@@ -25,6 +25,8 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from src.data.utils import ensure_dir, rate
+
 
 # -----------------------------
 # Data classes for auditability
@@ -71,10 +73,6 @@ def _run_id(prefix: str = "ingest") -> str:
     ts = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     ts = ts.replace(":", "-").replace("+00:00", "Z")
     return f"{prefix}_{ts}"
-
-
-def _ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
 
 
 def _sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -169,9 +167,7 @@ def _coerce_numeric(
 
 
 def _rate(count: int, denom: int) -> float:
-    if denom <= 0:
-        return 0.0
-    return float(count) / float(denom)
+    return rate(count, denom)
 
 
 def _check_not_null(df: pd.DataFrame, col: str) -> Dict[str, Any]:
@@ -369,7 +365,7 @@ def write_raw_snapshots(
     parquet_engine: str = "pyarrow",
     compression: str = "snappy",
 ) -> Tuple[Path, Path]:
-    _ensure_dir(raw_dir)
+    ensure_dir(raw_dir)
     rid = run_id or _run_id("raw")
 
     out_freq = raw_dir / f"{freq_name}__{rid}.parquet"
@@ -426,7 +422,7 @@ def build_manifest(
 
 
 def save_manifest(manifest: IngestManifest, *, out_path: Path) -> None:
-    _ensure_dir(out_path.parent)
+    ensure_dir(out_path.parent)
     out_path.write_text(json.dumps(asdict(manifest), indent=2, ensure_ascii=False), encoding="utf-8")
 
 

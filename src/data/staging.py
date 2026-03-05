@@ -3,7 +3,7 @@
 Staging layer for freMTPL2freq / freMTPL2sev.
 
 Purpose (insurance-grade):
-- Canonicalize keys (IDpol) for safe joins
+-  keys (IDpol) for safe joins
 - Apply controlled, documented data policies (e.g., Exposure cap)
 - Normalize categorical strings (trim/case)
 - Write staged parquet + a staging report (JSON) for governance/audit
@@ -20,16 +20,14 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
+from src.data.utils import ensure_dir
+
 
 # -----------------------------
 # Utilities
 # -----------------------------
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
-def _ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
 
 
 def _sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
@@ -203,8 +201,8 @@ def stage_freq_and_sev(
       - out_dir/sev_staged.parquet
       - report_path JSON with policies + counts + hashes
     """
-    _ensure_dir(out_dir)
-    _ensure_dir(report_path.parent)
+    ensure_dir(out_dir)
+    ensure_dir(report_path.parent)
 
     # Load raw snapshots (immutable inputs)
     df_freq = pd.read_parquet(freq_snapshot_path)

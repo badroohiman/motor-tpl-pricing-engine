@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 from src.data.schemas import ColumnSpec, DatasetSchema, FREQ_SCHEMA, SEV_SCHEMA
+from src.data.utils import ensure_dir, rate
 
 
 # -----------------------------
@@ -44,12 +45,8 @@ class ValidationReport:
 # -----------------------------
 # Helpers
 # -----------------------------
-def _ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
-
-
 def _rate(count: int, denom: int) -> float:
-    return 0.0 if denom <= 0 else float(count) / float(denom)
+    return rate(count, denom)
 
 
 def _dtype_matches(series: pd.Series, target: str) -> bool:
@@ -391,7 +388,7 @@ def validate_dataset(
 
 
 def save_report(report: ValidationReport, out_path: Path) -> None:
-    _ensure_dir(out_path.parent)
+    ensure_dir(out_path.parent)
     payload = {
         "dataset": report.dataset,
         "ok": report.ok,
@@ -417,7 +414,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     out_dir = Path(args.out)
-    _ensure_dir(out_dir)
+    ensure_dir(out_dir)
 
     if args.freq:
         df_freq = pd.read_parquet(args.freq)
