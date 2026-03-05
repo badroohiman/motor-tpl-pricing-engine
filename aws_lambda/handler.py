@@ -36,28 +36,31 @@ def _init_service() -> QuoteService:
     - PRICING_CONFIG_PATH: path to pricing_config.yaml
     - SEV_GUARDRAIL_CAP: optional float cap for predicted severity at serving time
     """
+    # NOTE: Use POSIX-style separators in defaults so paths work on Linux
+    # (Lambda container) and Windows. Environment variables can always
+    # override these defaults.
     freq_model = Path(
         os.getenv(
             "FREQ_MODEL_PATH",
-            r"artifacts\models\frequency\freq_glm_nb.joblib",
+            "artifacts/models/frequency/freq_glm_nb.joblib",
         )
     )
     sev_model = Path(
         os.getenv(
             "SEV_MODEL_PATH",
-            r"artifacts\models\severity\sev_glm_gamma.joblib",
+            "artifacts/models/severity/sev_glm_gamma.joblib",
         )
     )
     sev_cap_raw = os.getenv(
         "SEV_CAP_PATH",
-        r"artifacts\models\severity\sev_cap.json",
+        "artifacts/models/severity/sev_cap.json",
     )
     sev_cap_path = Path(sev_cap_raw) if sev_cap_raw else None
 
     pricing_config = Path(
         os.getenv(
             "PRICING_CONFIG_PATH",
-            r"configs\pricing\pricing_config.yaml",
+            "configs/pricing/pricing_config.yaml",
         )
     )
 
