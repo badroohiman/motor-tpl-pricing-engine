@@ -1,0 +1,95 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Motor TPL Pricing Engine - Quote Lambda (container image) with HTTP API.
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: >
+      ECR image URI for the Lambda function
+      (e.g. 123456789012.dkr.ecr.eu-west-1.amazonaws.com/motor-tpl-pricing-quote:latest)
+
+  FunctionName:
+    Type: String
+    Default: motor-tpl-pricing-quote
+    Description: Name of the Lambda function.
+
+  ApiName:
+    Type: String
+    Default: motor-tpl-pricing-quote-api
+    Description: Name of the HTTP API.
+
+Resources:
+  QuoteLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  QuoteLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      PackageType: Image
+      Code:
+        ImageUri: !Ref ImageUri
+      Role: !GetAtt QuoteLambdaRole.Arn
+      MemorySize: 1024
+      Timeout: 10
+      Environment:
+        Variables:
+          FREQ_MODEL_PATH: artifacts/models/frequency/freq_glm_nb.joblib
+          SEV_MODEL_PATH: artifacts/models/severity/sev_glm_gamma.joblib
+          SEV_CAP_PATH: artifacts/models/severity/sev_cap.json
+          PRICING_CONFIG_PATH: configs/pricing/pricing_config.yaml
+
+  QuoteApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Ref ApiName
+      ProtocolType: HTTP
+
+  QuoteIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref QuoteApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${QuoteLambdaFunction.Arn}/invocations
+      PayloadFormatVersion: "2.0"
+      IntegrationMethod: POST
+
+  QuoteRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref QuoteApi
+      RouteKey: "POST /quote"
+      Target: !Sub integrations/${QuoteIntegration}
+
+  QuoteStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref QuoteApi
+      StageName: prod
+      AutoDeploy: true
+
+  QuoteLambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref QuoteLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${QuoteApi}/*/*/quote
+
+Outputs:
+  ApiEndpoint:
+    Description: HTTPS endpoint for the quote API.
+    Value: !Sub https://${QuoteApi}.execute-api.${AWS::Region}.amazonaws.com/prod/quote
+

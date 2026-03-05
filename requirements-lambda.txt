@@ -1,0 +1,7 @@
+numpy
+pandas
+statsmodels
+patsy
+joblib
+PyYAML
+

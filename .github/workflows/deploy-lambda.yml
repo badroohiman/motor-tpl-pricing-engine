@@ -1,0 +1,64 @@
+name: Deploy Motor TPL Quote Lambda
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "src/**"
+      - "aws_lambda/**"
+      - "Dockerfile.lambda"
+      - "requirements-lambda.txt"
+      - ".github/workflows/deploy-lambda.yml"
+
+jobs:
+  deploy:
+    name: Build and deploy Lambda container image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      AWS_REGION: eu-west-1
+      ECR_REPOSITORY: motor-tpl-pricing-quote
+      IMAGE_TAG: latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image for Lambda
+        run: |
+          docker build \
+            -f Dockerfile.lambda \
+            -t $ECR_REPOSITORY:$IMAGE_TAG \
+            .
+
+      - name: Tag image with ECR registry
+        run: |
+          docker tag \
+            $ECR_REPOSITORY:$IMAGE_TAG \
+            ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Push image to ECR
+        run: |
+          docker push ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Update Lambda function to new image
+        run: |
+          aws lambda update-function-code \
+            --function-name motor-tpl-pricing-quote \
+            --image-uri ${{ steps.login-ecr.outputs.registry }}/$ECR_REPOSITORY:$IMAGE_TAG
+
