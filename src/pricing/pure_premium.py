@@ -308,6 +308,27 @@ def _ensure_formula_lhs_in_df(df: pd.DataFrame, formula: str) -> pd.DataFrame:
     return df
 
 
+def _coerce_string_dtypes_to_object(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Patsy + NumPy do not understand pandas' extension StringDtype, which
+    can appear when artifacts were trained with pandas using string dtypes.
+    To keep compatibility, coerce any non-object string-like dtypes back
+    to plain Python-object dtype before building design matrices.
+    """
+    out = df.copy()
+    for col in out.columns:
+        dtype = out[col].dtype
+        # Match pandas StringDtype (name can be "string", "string[python]", etc.)
+        is_extension_string = (
+            isinstance(dtype, pd.StringDtype)
+            or (hasattr(dtype, "name") and dtype.name and str(dtype.name).lower().startswith("string"))
+            or (str(dtype).startswith("<") and "StringDtype" in str(dtype))
+        )
+        if is_extension_string and dtype != object:
+            out[col] = out[col].astype("object")
+    return out
+
+
 def _expand_df_for_patsy(df: pd.DataFrame, factor_levels: Dict[str, List[str]]) -> pd.DataFrame:
     """
     Build a dataframe that includes all categorical levels so patsy.dmatrices
@@ -368,6 +389,7 @@ class PatsyGLMModel:
             df_eval = _expand_df_for_patsy(df_eval, self.factor_levels)
         if self.spline_anchor:
             df_eval = _append_spline_anchor_rows(df_eval, self.spline_anchor)
+        df_eval = _coerce_string_dtypes_to_object(df_eval)
         _, X = patsy.dmatrices(self.formula, df_eval, return_type="dataframe")
         # Use only the first row (the actual policy); rest were for consistent design columns / knots
         X = X.iloc[[0]]
@@ -383,6 +405,7 @@ class PatsyGLMModel:
         patsy uses all rows for design matrix (same columns as training).
         """
         df_eval = _ensure_formula_lhs_in_df(df.copy(), self.formula)
+        df_eval = _coerce_string_dtypes_to_object(df_eval)
         _, X = patsy.dmatrices(self.formula, df_eval, return_type="dataframe")
         if offset is None:
             pred = self.res.predict(X)
@@ -463,6 +486,7 @@ class PurePremiumEngine:
         # Build single-row dataframe (log1p_Density for training-serving parity with freq/sev models)
         df = pd.DataFrame([p])
         df["log1p_Density"] = np.log1p(np.maximum(float(p.get("Density", 0) or 0), 0))
+        df = _coerce_string_dtypes_to_object(df)
 
         # Frequency: predict expected count for given exposure period using offset(log(Exposure))
         exp = float(df.loc[0, "Exposure"])

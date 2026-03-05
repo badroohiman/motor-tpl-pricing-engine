@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MotorSafe — Motor Third-Party Liability Quote</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="site-wrap">
+    <!-- Header: looks like a real insurer -->
+    <header class="header">
+      <div class="header-inner">
+        <a href="#" class="logo">MotorSafe</a>
+        <p class="tagline">Motor Third-Party Liability — Get a quote in seconds</p>
+        <nav class="nav">
+          <a href="#quote">Get a quote</a>
+          <a href="#about">About this demo</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Hero -->
+      <section class="hero">
+        <h1>Your motor insurance quote, in under a minute</h1>
+        <p class="hero-sub">Enter your details below. This is a <strong>portfolio demo</strong> powered by a production-style pricing engine (freMTPL2).</p>
+        <a href="#quote-form" class="cta-button">Get your quote</a>
+      </section>
+
+      <!-- Quote form: real insurance feel -->
+      <section id="quote" class="section quote-section">
+        <h2>Quote request</h2>
+        <p class="section-desc">All fields are required. Your quote is computed in real time by the pricing engine.</p>
+
+        <form id="quote-form" class="quote-form">
+          <fieldset class="form-block">
+            <legend>Driver &amp; policy</legend>
+            <div class="form-grid">
+              <label for="DrivAge">Driver age</label>
+              <input type="number" id="DrivAge" name="DrivAge" min="18" max="99" value="35" required />
+
+              <label for="BonusMalus">Bonus–Malus (no-claims level)</label>
+              <input type="number" id="BonusMalus" name="BonusMalus" min="50" max="350" value="80" required />
+
+              <label for="Exposure">Coverage period (years)</label>
+              <select id="Exposure" name="Exposure">
+                <option value="0.25">3 months</option>
+                <option value="0.5">6 months</option>
+                <option value="1" selected>1 year</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-block">
+            <legend>Vehicle</legend>
+            <div class="form-grid">
+              <label for="VehPower">Power class (1–13)</label>
+              <input type="number" id="VehPower" name="VehPower" min="1" max="13" value="6" required />
+
+              <label for="VehAge">Vehicle age (years)</label>
+              <input type="number" id="VehAge" name="VehAge" min="0" max="30" value="3" required />
+
+              <label for="VehBrand">Vehicle</label>
+              <select id="VehBrand" name="VehBrand" required>
+                <option value="B1" selected>Renault Clio</option>
+                <option value="B2">Peugeot 208</option>
+                <option value="B3">VW Golf</option>
+                <option value="B4">Citroën C3</option>
+                <option value="B5">Toyota Yaris</option>
+                <option value="B6">Ford Fiesta</option>
+                <option value="B10">Nissan Micra</option>
+                <option value="B11">Hyundai i20</option>
+                <option value="B12">Kia Rio</option>
+                <option value="B13">Dacia Sandero</option>
+                <option value="B14">Skoda Fabia</option>
+              </select>
+
+              <label for="VehGas">Fuel type</label>
+              <select id="VehGas" name="VehGas" required>
+                <option value="regular" selected>Petrol</option>
+                <option value="diesel">Diesel</option>
+              </select>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-block">
+            <legend>Location</legend>
+            <div class="form-grid">
+              <label for="Area">Area</label>
+              <select id="Area" name="Area" required>
+                <option value="A" selected>Urban</option>
+                <option value="B">Suburban</option>
+                <option value="C">Rural</option>
+                <option value="D">Ex-urban</option>
+                <option value="E">Remote</option>
+                <option value="F">Very remote</option>
+              </select>
+
+              <label for="Region">Region</label>
+              <select id="Region" name="Region" required>
+                <option value="R11">London</option>
+                <option value="R21">South East</option>
+                <option value="R22">South West</option>
+                <option value="R23">East of England</option>
+                <option value="R24" selected>Greater Manchester</option>
+                <option value="R25">West Midlands</option>
+                <option value="R26">North West</option>
+                <option value="R31">Yorkshire & the Humber</option>
+                <option value="R41">East Midlands</option>
+                <option value="R42">North East</option>
+                <option value="R43">Wales</option>
+                <option value="R52">Scotland</option>
+                <option value="R53">Northern Ireland</option>
+                <option value="R54">Kent</option>
+                <option value="R72">Essex</option>
+                <option value="R73">Merseyside</option>
+                <option value="R74">Hampshire</option>
+                <option value="R82">Surrey</option>
+                <option value="R83">Lancashire</option>
+                <option value="R91">Devon</option>
+                <option value="R93">Cornwall</option>
+              </select>
+
+              <label for="Density">Population density (inhabitants/km²)</label>
+              <input type="number" id="Density" name="Density" min="0" max="10000" value="1000" required />
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit" class="cta-button" id="submit-btn">Get my quote</button>
+          </div>
+        </form>
+
+        <!-- Quote result (hidden until we have a response) -->
+        <div id="quote-result" class="quote-result" aria-live="polite" hidden>
+          <div class="quote-result-inner">
+            <h3>Your quote</h3>
+            <div class="quote-price">
+              <span class="quote-amount" id="quote-amount">—</span>
+              <span class="quote-period">/ year</span>
+            </div>
+            <p class="quote-decision" id="quote-decision"></p>
+            <div id="quote-risk" class="quote-block"></div>
+            <div id="quote-model" class="quote-block"></div>
+            <div id="quote-pricing" class="quote-block"></div>
+            <p class="quote-disclaimer">This is a portfolio demo. Prices are illustrative and not a real offer.</p>
+          </div>
+        </div>
+
+        <div id="quote-error" class="quote-error" aria-live="polite" hidden>
+          <p><strong>We couldn’t get a quote right now.</strong></p>
+          <p id="error-message"></p>
+          <p>Make sure the pricing API is running (see <code>web-demo/README.md</code>).</p>
+        </div>
+      </section>
+
+      <!-- About demo: portfolio context -->
+      <section id="about" class="section about-section">
+        <h2>About this demo</h2>
+        <p>This page is part of a <strong>portfolio project</strong>. The quote you see is produced by a production-style <strong>Motor TPL Pricing Engine</strong> (France, freMTPL2): frequency and severity models, pure premium, gross premium with expense and margin, and full auditability.</p>
+        <p>It is not a real insurance company. No contract is formed; the engine is for demonstration only.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>MotorSafe demo — Motor TPL Pricing Engine · Portfolio project</p>
+    </footer>
+  </div>
+
+  <script src="mappings.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,6 +1,8 @@
 numpy==1.26.4
-pandas
-statsmodels
-joblib
-PyYAML
+scipy==1.11.4
+pandas==3.0.1
+statsmodels==0.14.2
 patsy==0.5.6
+joblib==1.4.2
+PyYAML==6.0.1
+pyarrow==15.0.2

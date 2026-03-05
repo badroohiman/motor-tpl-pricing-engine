@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from src.pricing.quote_service import QuoteService
@@ -59,7 +61,23 @@ def _default_service() -> QuoteService:
 
 
 app = FastAPI(title="Motor TPL Pricing API", version="1.0.0")
+
+# Allow portfolio/demo frontends from other origins to call /quote
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
 service = _default_service()
+
+# Optional: serve the insurance-style demo at /demo/ (same origin as API)
+_api_root = Path(__file__).resolve().parents[2]
+_demo_dir = _api_root / "web-demo"
+if _demo_dir.is_dir():
+    app.mount("/demo", StaticFiles(directory=str(_demo_dir), html=True), name="demo")
 
 
 @app.post("/quote")

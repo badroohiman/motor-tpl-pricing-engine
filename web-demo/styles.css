@@ -1,0 +1,363 @@
+/* MotorSafe — Insurance-style demo. Professional, trustworthy. */
+:root {
+  --bg: #f8f9fb;
+  --surface: #ffffff;
+  --text: #1a1d23;
+  --text-muted: #5c6370;
+  --accent: #0d4f6e;
+  --accent-hover: #0a3d54;
+  --border: #e2e6ec;
+  --success: #0d6b4c;
+  --warning: #9a6700;
+  --error: #b91c1c;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --font-sans: "DM Sans", system-ui, sans-serif;
+  --font-serif: "Libre Baskerville", Georgia, serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.site-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+}
+
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.nav {
+  margin-left: auto;
+  display: flex;
+  gap: 1.25rem;
+}
+
+.nav a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+/* Hero */
+.hero {
+  background: linear-gradient(160deg, #0d4f6e 0%, #0a3d54 100%);
+  color: #fff;
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.hero h1 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-serif);
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+}
+
+.hero-sub {
+  margin: 0 auto 1.5rem;
+  max-width: 520px;
+  opacity: 0.95;
+  font-size: 0.95rem;
+}
+
+.hero .cta-button {
+  display: inline-block;
+  background: #fff;
+  color: var(--accent);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius);
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.hero .cta-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Sections */
+.section {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.section h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  color: var(--text);
+}
+
+.section-desc {
+  margin: 0 0 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+/* Form */
+.quote-form {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-block {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border: none;
+}
+
+.form-block:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-block legend {
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.25rem;
+}
+
+@media (max-width: 540px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-grid label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.form-grid input,
+.form-grid select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.form-grid input:focus,
+.form-grid select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(13, 79, 110, 0.15);
+}
+
+.form-actions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.cta-button {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cta-button:hover {
+  background: var(--accent-hover);
+}
+
+.cta-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Quote result */
+.quote-result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.quote-result-inner h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+}
+
+.quote-price {
+  margin: 0.5rem 0 1rem;
+}
+
+.quote-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.quote-period {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.quote-decision {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.quote-block {
+  margin-bottom: 1rem;
+}
+
+.quote-block h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.quote-summary {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.quote-summary li {
+  margin-bottom: 0.25rem;
+}
+
+.quote-summary li:last-child {
+  margin-bottom: 0;
+}
+
+.quote-disclaimer {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.quote-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  margin-top: 1rem;
+  color: var(--error);
+}
+
+.quote-error p {
+  margin: 0 0 0.5rem;
+}
+
+.quote-error p:last-child {
+  margin-bottom: 0;
+}
+
+.quote-error code {
+  font-size: 0.85em;
+  background: rgba(0,0,0,0.06);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+
+/* About */
+.about-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+}
+
+.about-section p {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+}
+
+.about-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* Footer */
+.footer {
+  margin-top: auto;
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+}
+
+.footer p {
+  margin: 0;
+}
