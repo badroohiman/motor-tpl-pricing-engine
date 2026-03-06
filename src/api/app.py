@@ -7,13 +7,16 @@ Design:
 - Pydantic input schema for strict policy validation (types + ranges).
 - Uses src.pricing.quote_service.QuoteService under the hood.
 - Structured logging with request_id, model_version, config_version, warnings_count.
+- Lambda-friendly lazy service initialization using environment variables.
 """
 
 import json
 import logging
-from uuid import uuid4
+import os
+from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,7 +28,7 @@ from src.pricing.quote_service import QuoteService
 
 logger = logging.getLogger("pricing_api")
 if not logger.handlers:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
 
 class PolicyInput(BaseModel):
@@ -41,40 +44,80 @@ class PolicyInput(BaseModel):
     Exposure: float = Field(..., gt=0, le=2)
 
 
-def _default_service() -> QuoteService:
+def _resolve_repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _build_service() -> QuoteService:
     """
-    Build a default QuoteService using standard artifact/config paths.
-    Assumes the working directory is the repo root when running uvicorn.
+    Build QuoteService using environment variables when provided,
+    otherwise fall back to repo-relative defaults.
     """
-    root = Path(__file__).resolve().parents[2]
-    freq_model = root / "artifacts" / "models" / "frequency" / "freq_glm_nb.joblib"
-    sev_model = root / "artifacts" / "models" / "severity" / "sev_glm_gamma.joblib"
-    sev_cap = root / "artifacts" / "models" / "severity" / "sev_cap.json"
-    pricing_cfg = root / "configs" / "pricing" / "pricing_config.yaml"
+    root = _resolve_repo_root()
+
+    freq_model = Path(
+        os.getenv(
+            "FREQ_MODEL_PATH",
+            str(root / "artifacts" / "models" / "frequency" / "freq_glm_nb.joblib"),
+        )
+    )
+    sev_model = Path(
+        os.getenv(
+            "SEV_MODEL_PATH",
+            str(root / "artifacts" / "models" / "severity" / "sev_glm_gamma.joblib"),
+        )
+    )
+    sev_cap_raw = os.getenv(
+        "SEV_CAP_PATH",
+        str(root / "artifacts" / "models" / "severity" / "sev_cap.json"),
+    )
+    pricing_cfg = Path(
+        os.getenv(
+            "PRICING_CONFIG_PATH",
+            str(root / "configs" / "pricing" / "pricing_config.yaml"),
+        )
+    )
+
+    sev_cap = Path(sev_cap_raw) if sev_cap_raw else None
+    if sev_cap is not None and not sev_cap.exists():
+        sev_cap = None
 
     return QuoteService(
         freq_model_path=freq_model,
         sev_model_path=sev_model,
-        sev_cap_path=sev_cap if sev_cap.exists() else None,
+        sev_cap_path=sev_cap,
         pricing_config_path=pricing_cfg,
     )
 
 
-app = FastAPI(title="Motor TPL Pricing API", version="1.0.0")
+_SERVICE: Optional[QuoteService] = None
 
-# Allow portfolio/demo frontends from other origins to call /quote
+
+def get_service() -> QuoteService:
+    global _SERVICE
+    if _SERVICE is None:
+        _SERVICE = _build_service()
+    return _SERVICE
+
+
+APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+MODEL_VERSION = os.getenv("MODEL_VERSION", "unknown")
+CONFIG_VERSION = os.getenv("CONFIG_VERSION", "unknown")
+
+app = FastAPI(title="Motor TPL Pricing API", version=APP_VERSION)
+
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
-service = _default_service()
-
-# Optional: serve the insurance-style demo at /demo/ (same origin as API)
-_api_root = Path(__file__).resolve().parents[2]
+# Optional: serve demo locally or from same origin deployment
+_api_root = _resolve_repo_root()
 _demo_dir = _api_root / "web-demo"
 if _demo_dir.is_dir():
     app.mount("/demo", StaticFiles(directory=str(_demo_dir), html=True), name="demo")
@@ -82,28 +125,26 @@ if _demo_dir.is_dir():
 
 @app.post("/quote")
 async def quote(policy: PolicyInput) -> Dict[str, Any]:
-    """
-    Compute a quote (pure + gross premium) for a single policy.
-    """
     request_id = str(uuid4())
 
     try:
-        quote_res = service.quote(policy.dict())
+        service = get_service()
+        quote_res = service.quote(policy.model_dump())
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("Unhandled error during quote request")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-    # Structured log
     log_payload: Dict[str, Any] = {
         "event": "quote",
         "request_id": request_id,
         "decision": quote_res.decision,
-        "model_version": quote_res.model_version,
-        "config_version": quote_res.config_version,
+        "model_version": getattr(quote_res, "model_version", MODEL_VERSION),
+        "config_version": getattr(quote_res, "config_version", CONFIG_VERSION),
         "warnings_count": len(quote_res.warnings),
     }
     logger.info(json.dumps(log_payload, ensure_ascii=False))
-
-    from dataclasses import asdict
 
     return {
         "request_id": request_id,
@@ -112,6 +153,23 @@ async def quote(policy: PolicyInput) -> Dict[str, Any]:
 
 
 @app.get("/health")
-async def health() -> Dict[str, str]:
-    return {"status": "ok"}
+async def health() -> Dict[str, Any]:
+    try:
+        service = get_service()
 
+        return {
+            "status": "ok",
+            "app_version": APP_VERSION,
+            "model_version": getattr(service, "model_version", MODEL_VERSION),
+            "config_version": getattr(service, "config_version", CONFIG_VERSION),
+        }
+    except Exception as e:
+        logger.exception("Health check failed")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "message": str(e),
+                "app_version": APP_VERSION,
+            },
+        )

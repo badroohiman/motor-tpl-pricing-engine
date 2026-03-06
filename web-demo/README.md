@@ -6,9 +6,11 @@ This folder is a **standalone web demo** that makes the Motor TPL Pricing Engine
 
 - **index.html** — One-page “insurer” site: header, hero, quote form, result, and an “About this demo” section.
 - **styles.css** — Professional insurance look (trustworthy, clean).
+- **mappings.js** — Maps internal dataset codes (e.g. `B1`, `R24`, `A`) to human-readable UK labels for vehicle, area, region, and fuel.
 - **app.js** — Form → POST `/quote` → display premium and breakdown.
 
-The demo sends the form data to the pricing API and shows **gross premium**, **decision** (BIND/REFER), and a short **breakdown** (λ, μ, pure premium).
+The demo sends the form data to the pricing API and shows **gross premium**, **decision** (BIND/REFER), and a short **breakdown** (λ, μ, pure premium).  
+On the front-end, users see **UK-style labels and pounds (£)**; under the hood, the engine still uses the original freMTPL2 categorical codes for model parity.
 
 ## Run the demo locally
 
@@ -96,7 +98,7 @@ Then open `http://localhost:8000/demo/` to use the demo; the form will POST to `
 
 ## Requirements
 
-- Pricing API running (FastAPI with trained artifacts, or a Lambda + API Gateway that accepts `POST` body `{ "policy": { ... } }` and returns the same quote shape).
+- Pricing API running: either the **FastAPI app in this repo** (expects a JSON body with policy fields at the top level, as sent by `app.js`), or a Lambda + API Gateway that you configure to accept the same shape (optionally wrapped as `{ "policy": { ... } }` for compatibility with the Lambda handler).
 - Browser with JavaScript enabled.
 
 No build step is required for the provided HTML/CSS/JS.
