@@ -11,27 +11,41 @@
 </head>
 <body>
   <div class="site-wrap">
-    <!-- Header: looks like a real insurer -->
+    <!-- Top bar: key links for recruiters -->
+    <div class="top-bar">
+      <div class="top-bar-inner">
+        <a href="#" id="link-github-repo" class="top-bar-link">View GitHub</a>
+        <a href="#how-it-works" class="top-bar-link">Architecture</a>
+        <a href="#about" class="top-bar-link">Case Study</a>
+        <a href="#quote" class="top-bar-link">Live API</a>
+      </div>
+    </div>
+
     <header class="header">
       <div class="header-inner">
         <a href="#" class="logo">MotorSafe</a>
         <p class="tagline">Motor Third-Party Liability — Get a quote in seconds</p>
         <nav class="nav">
-          <a href="#quote">Get a quote</a>
-          <a href="#about">About this demo</a>
+          <a href="#quote">Live demo</a>
+          <a href="#" id="nav-github" class="nav-github">GitHub</a>
+          <a href="#how-it-works">Architecture</a>
+          <a href="https://x4lbq3j2if.execute-api.eu-west-2.amazonaws.com/quote" target="_blank" rel="noopener">Live API</a>
         </nav>
       </div>
     </header>
 
     <main>
-      <!-- Hero -->
       <section class="hero">
+        <span class="hero-badge">Live on AWS</span>
         <h1>Your motor insurance quote, in under a minute</h1>
-        <p class="hero-sub">Enter your details below. This is a <strong>portfolio demo</strong> powered by a production-style pricing engine (freMTPL2).</p>
+        <p class="hero-sub">
+          Real-time motor insurance pricing powered by frequency–severity machine learning models
+          deployed on AWS Lambda and API Gateway. This demonstration system mirrors production-style
+          pricing architecture used in regulated insurance markets.
+        </p>
         <a href="#quote-form" class="cta-button">Get your quote</a>
       </section>
 
-      <!-- Quote form: real insurance feel -->
       <section id="quote" class="section quote-section">
         <h2>Quote request</h2>
         <p class="section-desc">All fields are required. Your quote is computed in real time by the pricing engine.</p>
@@ -135,7 +149,6 @@
           </div>
         </form>
 
-        <!-- Quote result (hidden until we have a response) -->
         <div id="quote-result" class="quote-result" aria-live="polite" hidden>
           <div class="quote-result-inner">
             <h3>Your quote</h3>
@@ -143,11 +156,49 @@
               <span class="quote-amount" id="quote-amount">—</span>
               <span class="quote-period">/ year</span>
             </div>
+            <div class="quote-meta">
+              <span class="quote-decision-badge" id="quote-decision-badge">BIND</span>
+              <span class="quote-config-version" id="quote-config-version"></span>
+            </div>
             <p class="quote-decision" id="quote-decision"></p>
+
+            <div id="quote-summary-card" class="quote-card"></div>
+            <div id="quote-breakdown-card" class="quote-card"></div>
             <div id="quote-risk" class="quote-block"></div>
             <div id="quote-model" class="quote-block"></div>
             <div id="quote-pricing" class="quote-block"></div>
-            <p class="quote-disclaimer">This is a portfolio demo. Prices are illustrative and not a real offer.</p>
+
+            <div id="rating-factors" class="quote-block">
+              <h4>Main rating factors</h4>
+              <ul class="quote-summary">
+                <li>Driver age</li>
+                <li>Vehicle type and power</li>
+                <li>Location (region &amp; area)</li>
+                <li>Population density</li>
+                <li>Bonus–Malus (no-claims level)</li>
+              </ul>
+            </div>
+
+            <div id="model-governance" class="quote-block">
+              <h4>Model governance</h4>
+              <ul class="quote-summary">
+                <li>Training dataset: freMTPL2 (frequency &amp; severity tables)</li>
+                <li>Frequency model: Negative Binomial GLM</li>
+                <li>Severity model: Gamma GLM (log link)</li>
+                <li>Model version: see quote metadata above</li>
+              </ul>
+            </div>
+
+            <details class="quote-why-details">
+              <summary>Why this quote?</summary>
+              <div id="quote-why-content" class="quote-why-content"></div>
+            </details>
+
+            <div class="quote-actions">
+              <button type="button" class="btn-secondary" id="btn-technical-details">View technical details</button>
+            </div>
+
+            <p class="quote-disclaimer">Demonstration system built to showcase production-style motor pricing architecture, not a commercial insurance offer.</p>
           </div>
         </div>
 
@@ -158,19 +209,119 @@
         </div>
       </section>
 
-      <!-- About demo: portfolio context -->
+      <section id="how-it-works" class="section section-alt">
+        <h2>How it works</h2>
+        <p class="section-desc">End-to-end flow from your input to the quote.</p>
+        <div class="flow-diagram">
+          <div class="flow-step">User input</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Web demo</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">API Gateway</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">AWS Lambda</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Frequency model</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Severity model</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Pricing engine</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">Quote response</div>
+        </div>
+        <img
+          src="images/architecture.png"
+          alt="Real-time Motor Insurance Pricing Architecture"
+          class="architecture-img"
+        />
+      </section>
+
+      <section id="tech-stack" class="section">
+        <h2>Tech stack</h2>
+        <div class="tech-cards">
+          <div class="tech-card">
+            <h4>Backend</h4>
+            <p>Python, FastAPI, AWS Lambda, API Gateway</p>
+          </div>
+          <div class="tech-card">
+            <h4>Models</h4>
+            <p>statsmodels (NB GLM, Gamma GLM), patsy, scipy</p>
+          </div>
+          <div class="tech-card">
+            <h4>Deployment</h4>
+            <p>Docker, AWS Lambda, API Gateway</p>
+          </div>
+          <div class="tech-card">
+            <h4>Frontend</h4>
+            <p>HTML, CSS, JavaScript (vanilla)</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="engineering" class="section section-alt">
+        <h2>Engineering highlights</h2>
+        <ul class="highlights-list">
+          <li>Versioned model artifacts and pricing config</li>
+          <li>Structured Lambda response with audit metadata</li>
+          <li>Real-time inference via API Gateway</li>
+          <li>Containerized deployment with Docker</li>
+          <li>Explainable pricing (GLM term contributions)</li>
+        </ul>
+      </section>
+
       <section id="about" class="section about-section">
-        <h2>About this demo</h2>
-        <p>This page is part of a <strong>portfolio project</strong>. The quote you see is produced by a production-style <strong>Motor TPL Pricing Engine</strong> (France, freMTPL2): frequency and severity models, pure premium, gross premium with expense and margin, and full auditability.</p>
-        <p>It is not a real insurance company. No contract is formed; the engine is for demonstration only.</p>
+        <h2>About this project</h2>
+
+        <div class="about-block">
+          <h3>What this demonstrates</h3>
+          <ul>
+            <li>Frequency–severity pricing workflow</li>
+            <li>Pure premium and gross premium calculation</li>
+            <li>AWS Lambda + API Gateway deployment</li>
+            <li>Explainable pricing outputs</li>
+          </ul>
+        </div>
+
+        <div class="about-block">
+          <h3>Business relevance</h3>
+          <ul>
+            <li>Production-style insurance pricing demo</li>
+            <li>Real-time quote delivery</li>
+            <li>Risk-based premium calculation</li>
+            <li>Transparent pricing breakdown</li>
+          </ul>
+        </div>
+
+        <p class="about-note">This page is part of a portfolio project. The engine uses the freMTPL2 dataset (France) and is for demonstration only — no contract is formed.</p>
+
+        <a href="#" id="about-github" class="cta-button cta-secondary">Explore repository on GitHub</a>
       </section>
     </main>
 
     <footer class="footer">
-      <p>MotorSafe demo — Motor TPL Pricing Engine · Portfolio project</p>
+      <div class="footer-links">
+        <a href="#" id="footer-github">GitHub</a>
+        <a href="#" id="footer-docs">Documentation</a>
+        <a href="#" id="footer-portfolio">Portfolio</a>
+      </div>
+      <p class="footer-copy">MotorSafe demo — Motor TPL Pricing Engine · Portfolio project</p>
     </footer>
   </div>
 
+  <dialog id="technical-details-modal" class="modal">
+    <div class="modal-inner">
+      <h3>Technical details</h3>
+      <pre id="technical-details-json" class="modal-pre"></pre>
+      <button type="button" class="btn-secondary" id="modal-close">Close</button>
+    </div>
+  </dialog>
+
+  <script>
+    window.QUOTE_API_BASE = "https://x4lbq3j2if.execute-api.eu-west-2.amazonaws.com";
+    window.GITHUB_REPO_URL = "https://github.com/yourusername/motor-tpl-pricing-engine";
+    window.FOOTER_DOCS_URL = "#";
+    window.FOOTER_PORTFOLIO_URL = "#";
+  </script>
   <script src="mappings.js"></script>
   <script src="app.js"></script>
 </body>
