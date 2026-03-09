@@ -7,6 +7,15 @@ This project demonstrates how actuarial modeling, machine learning, and data gov
 
 ---
 
+## Live demo
+
+![Live demo screenshot](web-demo/images/demo-screenshot.png)
+
+- **Web demo**: insurance-style quote UI in `web-demo/index.html` (can be hosted as part of a portfolio site).  
+- **Live API** (example): `https://x4lbq3j2if.execute-api.eu-west-2.amazonaws.com/quote` (AWS API Gateway → Lambda).
+
+---
+
 ## Executive Summary
 
 This system estimates:
@@ -59,6 +68,8 @@ Pricing Engine
 API / Batch Rating
 
 ```
+
+![Real‑time Motor Insurance Pricing Architecture](web-demo/images/architecture.png)
 
 ---
 
@@ -246,6 +257,54 @@ The engineered frequency model improves risk segmentation and calibration compar
 ### Gross pricing
 - Config-driven: division or multiplicative loadings, min/max caps, optional tiering
 - Quote includes breakdown and pricing_config_version for audit
+
+---
+
+## Model performance
+
+**Frequency model (Negative Binomial GLM)**  
+- Decent deviance explained on validation (see `artifacts/reports/frequency/*` model cards).  
+- Good calibration by decile (obs/pred ≈ 1 across most deciles).
+
+**Severity model (Gamma GLM)**  
+- Gamma GLM with log link and optional tail cap at P99.9.  
+- Mean absolute error and calibration diagnostics are written to `artifacts/reports/severity/*` model cards.
+
+---
+
+## Serving latency & monitoring
+
+**Latency (online quoting)**  
+- Inference latency for the deployed Lambda + API Gateway stack is typically on the order of **~120 ms per quote** (excluding cold starts), which is suitable for real-time quoting flows.
+
+**Monitoring (CloudWatch)**  
+The pricing service is designed to emit operational metrics to AWS CloudWatch, including:
+
+- Request latency
+- Quote decisions (BIND / REFER)
+- Prediction distribution (frequency and severity)
+- API error rate
+
+These metrics can be used to monitor model behaviour, track premium stability, and detect drift in production environments.
+
+---
+
+## Model governance
+
+This project treats pricing as a governed asset rather than just a model file:
+
+- **Training dataset**: freMTPL2 frequency and severity tables.  
+- **Training date**: e.g. `2026-02-26` for the current production run.  
+- **Model types**:
+  - Frequency: Negative Binomial GLM with log(Exposure) offset.
+  - Severity: Gamma GLM with log link.
+- **Config-driven pricing**: `configs/pricing/pricing_config.yaml` controls expense, margin, min/max premium, and tiering.
+- **Versioned artifacts**: `src/pricing/quote_service.py` records:
+  - Git commit hash
+  - Model artifact paths and SHA256 hashes
+  - Pricing config path, version, and SHA256
+
+Each quote therefore carries enough metadata (via `model_version` and `config_version`) to be audited and reproduced.
 
 ---
 

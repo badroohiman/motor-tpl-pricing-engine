@@ -63,6 +63,26 @@
     };
   }
 
+  const btnLoadSample = document.getElementById('btn-load-sample');
+  if (btnLoadSample) {
+    btnLoadSample.addEventListener('click', function () {
+      const setVal = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+      };
+      setVal('DrivAge', 35);
+      setVal('BonusMalus', 80);
+      setVal('VehAge', 3);
+      setVal('VehPower', 6);
+      setVal('VehBrand', 'B1');
+      setVal('VehGas', 'regular');
+      setVal('Region', 'R24');
+      setVal('Area', 'A');
+      setVal('Density', 1000);
+      setVal('Exposure', 1);
+    });
+  }
+
   function codeToLabel(field, code) {
     const map = window.MOTORSAFE_LABELS && window.MOTORSAFE_LABELS[field];
     return (map && map[code]) ? map[code] : code;

@@ -156,10 +156,12 @@ def _build_response(status_code: int, payload: Dict[str, Any]) -> Dict[str, Any]
         "statusCode": int(status_code),
         "headers": {
             "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "Access-Control-Allow-Methods": "POST,OPTIONS",
         },
         "body": json.dumps(payload, ensure_ascii=False),
     }
-
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:  # noqa: ANN401
     """
