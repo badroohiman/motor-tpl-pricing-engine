@@ -1,5 +1,11 @@
 # Motor TPL Pricing Engine  
-**Production-Grade Insurance Pricing System (France – freMTPL2)**
+Production-Grade Insurance Pricing System (France – freMTPL2)
+
+🚀 **Live demo:**  
+https://motor-tpl-pricing-engine.vercel.app/
+
+🔗 **Live API endpoint:**  
+https://x4lbq3j2if.execute-api.eu-west-2.amazonaws.com/quote
 
 An insurance-focused, governance-aware motor third-party liability pricing engine built using the freMTPL2 frequency and severity datasets.
 
